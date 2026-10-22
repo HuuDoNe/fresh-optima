@@ -8,6 +8,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "prisma:seed": "prisma db seed",
     "db:use-postgres": "node -e \"const fs=require('fs'); fs.writeFileSync('prisma/schema.prisma', fs.readFileSync('prisma/schema.prisma','utf8').replace('provider = \\\"sqlite\\\"', 'provider = \\\"postgresql\\\"')); console.log('✅ Switched to PostgreSQL (Supabase)');\"",
     "db:use-sqlite": "node -e \"const fs=require('fs'); fs.writeFileSync('prisma/schema.prisma', fs.readFileSync('prisma/schema.prisma','utf8').replace('provider = \\\"postgresql\\\"', 'provider = \\\"sqlite\\\"')); console.log('✅ Switched to SQLite (Local)');\""
   },
