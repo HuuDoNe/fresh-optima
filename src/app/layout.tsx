@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,9 +12,27 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#059669",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
-  title: "FreshOptima — Hệ Thống Tối Ưu Đặt Hàng Rau Củ",
+  title: "FreshOptima — Tối Ưu Đặt Hàng Rau Củ",
   description: "Hệ thống tối ưu báo giá & đặt hàng rau củ theo từng bếp cho chuỗi nhà hàng và bếp ăn công nghiệp",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FreshOptima",
+  },
+  icons: {
+    icon: "/favicon-64.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

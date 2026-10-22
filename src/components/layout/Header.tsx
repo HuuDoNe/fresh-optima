@@ -3,6 +3,7 @@
 import React from "react";
 import { SupplierData, SessionState } from "@/lib/types";
 import { Calendar, UserCheck, Shield } from "lucide-react";
+import { PwaInstallButton } from "@/components/common/PwaInstallButton";
 
 interface HeaderProps {
   session: SessionState;
@@ -149,6 +150,9 @@ export function Header({
               ))}
             </select>
           </div>
+
+          {/* PWA Install App Button */}
+          <PwaInstallButton />
 
           {/* Role Switcher Modal Trigger */}
           <button
