@@ -1,5 +1,13 @@
 import { AllocationResult } from "./types";
 
+function formatDateVN(dateStr: string) {
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+}
+
 export function generateZaloOrderText(
   res: AllocationResult,
   supplierId: string,
@@ -15,13 +23,24 @@ export function generateZaloOrderText(
   if (!items.length) return "";
 
   const supName = items[0].supplierName;
+  const dateFormatted = formatDateVN(dateStr);
+
+  // If copying for a specific kitchen
+  if (specificKitchenId) {
+    const kName = items[0].kitchenName;
+    let msg = `ĐẶT HÀNG ${supName.toUpperCase()} (${kName.toUpperCase()}) ${dateFormatted}\n`;
+    items.forEach((it) => {
+      msg += `- ${it.itemName}: ${it.qty} ${it.unit}\n`;
+    });
+    return msg.trim();
+  }
+
+  // Group by kitchen
   const byKitchen: Record<
     string,
     {
       kitchenName: string;
-      kitchenNote: string;
       list: typeof items;
-      subTotal: number;
     }
   > = {};
 
@@ -29,35 +48,33 @@ export function generateZaloOrderText(
     if (!byKitchen[it.kitchenId]) {
       byKitchen[it.kitchenId] = {
         kitchenName: it.kitchenName,
-        kitchenNote: it.kitchenNote,
         list: [],
-        subTotal: 0,
       };
     }
     byKitchen[it.kitchenId].list.push(it);
-    byKitchen[it.kitchenId].subTotal += it.totalPrice;
   });
 
-  let total = 0;
-  let msg = `PHIẾU ĐẶT HÀNG RAU CỦ (${dateStr})\nKính gửi NCC: ${supName}\n(Lưu ý: Đóng gói và giao riêng từng bếp, không gộp chung)\n====================\n`;
+  const kitchenKeys = Object.keys(byKitchen);
 
-  Object.values(byKitchen).forEach((kb) => {
-    msg += `\n📌 ĐƠN RIÊNG: ${kb.kitchenName.toUpperCase()}${
-      kb.kitchenNote ? ` (${kb.kitchenNote})` : ""
-    }\n`;
-    kb.list.forEach((it, idx) => {
-      msg += `  ${idx + 1}. ${it.itemName}: ${it.qty} ${
-        it.unit
-      } x ${it.unitPrice.toLocaleString("vi-VN")}đ = ${it.totalPrice.toLocaleString(
-        "vi-VN"
-      )}đ\n`;
+  // If only 1 kitchen exists in this order
+  if (kitchenKeys.length === 1) {
+    const kb = byKitchen[kitchenKeys[0]];
+    let msg = `ĐẶT HÀNG ${supName.toUpperCase()} ${dateFormatted}\n`;
+    kb.list.forEach((it) => {
+      msg += `- ${it.itemName}: ${it.qty} ${it.unit}\n`;
     });
-    msg += `  -> Cộng ${kb.kitchenName}: ${kb.subTotal.toLocaleString(
-      "vi-VN"
-    )} VNĐ\n`;
-    total += kb.subTotal;
+    return msg.trim();
+  }
+
+  // If multiple kitchens exist, list items under each kitchen header (NO prices, pure quantity)
+  let msg = `ĐẶT HÀNG ${supName.toUpperCase()} ${dateFormatted}\n`;
+  kitchenKeys.forEach((kId) => {
+    const kb = byKitchen[kId];
+    msg += `\n${kb.kitchenName.toUpperCase()}:\n`;
+    kb.list.forEach((it) => {
+      msg += `- ${it.itemName}: ${it.qty} ${it.unit}\n`;
+    });
   });
 
-  msg += `\n====================\nTỔNG CỘNG: ${total.toLocaleString("vi-VN")} VNĐ`;
-  return msg;
+  return msg.trim();
 }

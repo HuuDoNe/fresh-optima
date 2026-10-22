@@ -60,14 +60,16 @@ async function runTests() {
     }
   }
 
-  // TEST 3: Kiểm tra Phiếu Đặt Hàng & Copy tin nhắn Zalo
+  // TEST 3: Kiểm tra Phiếu Đặt Hàng & Copy tin nhắn Zalo (mẫu mới: không kèm giá tiền)
   console.log("\n3️⃣ KIỂM TRA PHIẾU ĐẶT HÀNG & MẪU TIN NHẮN ZALO:");
   const sampleSupId = "sup1";
   const zaloAll = generateZaloOrderText(allocation, sampleSupId, today, null);
   console.log("   --- Xem thử mẫu tin nhắn Zalo gửi toàn bộ các bếp ---");
-  console.log(zaloAll.split("\n").slice(0, 10).join("\n") + "\n  ...");
-  const hasSeparateKitchenBlock = zaloAll.includes("ĐƠN RIÊNG: BẾP A") && zaloAll.includes("Cộng Bếp A:");
-  console.log(`   - Tách khối đơn riêng từng bếp trong Zalo: ${hasSeparateKitchenBlock ? "✅ ĐẠT CHUẨN" : "❌ CHƯA ĐẠT"}`);
+  console.log(zaloAll);
+  const startsWithDatHang = zaloAll.startsWith("ĐẶT HÀNG");
+  const hasNoPrice = !zaloAll.includes("VNĐ") && !zaloAll.includes("đ");
+  console.log(`   - Cú pháp ĐẶT HÀNG + TÊN NCC + ngày/tháng/năm: ${startsWithDatHang ? "✅ ĐẠT CHUẨN" : "❌ CHƯA ĐẠT"}`);
+  console.log(`   - Tuyệt đối không đặt kèm giá tiền: ${hasNoPrice ? "✅ ĐẠT CHUẨN" : "❌ CHƯA ĐẠT"}`);
 
   // Test Zalo riêng cho 1 bếp
   const zaloSingleKitchen = generateZaloOrderText(allocation, sampleSupId, today, "k1");
