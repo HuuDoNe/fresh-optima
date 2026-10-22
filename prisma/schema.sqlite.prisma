@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  username   String    @unique
+  role       String    @default("admin") // "admin" | "supplier"
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Supplier {
+  id          String        @id @default(cuid())
+  name        String
+  phone       String
+  note        String?
+  color       String        @default("#059669")
+  isActive    Boolean       @default(true)
+  users       User[]
+  quotes      DailyQuote[]
+  orderLines  OrderLine[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Kitchen {
+  id         String      @id @default(cuid())
+  name       String
+  note       String?
+  color      String      @default("#059669")
+  orderLines OrderLine[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model VegetableItem {
+  id         String       @id @default(cuid())
+  name       String
+  unit       String       @default("kg")
+  basePrice  Int          @default(20000)
+  quotes     DailyQuote[]
+  orderLines OrderLine[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model DailyQuote {
+  id         String        @id @default(cuid())
+  date       String        // "YYYY-MM-DD"
+  itemId     String
+  supplierId String
+  price      Int           // Đơn giá VNĐ
+  inStock    Boolean       @default(true)
+  item       VegetableItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier   Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([date, itemId, supplierId])
+  @@index([date])
+}
+
+model OrderBatch {
+  id          String      @id @default(cuid())
+  date        String      @unique // "YYYY-MM-DD"
+  totalWeight Float       @default(0)
+  totalCost   Int         @default(0)
+  totalSaved  Int         @default(0)
+  lines       OrderLine[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([date])
+}
+
+model OrderLine {
+  id           String        @id @default(cuid())
+  orderBatchId String
+  kitchenId    String
+  itemId       String
+  supplierId   String
+  qty          Float         // Số lượng đặt
+  unitPrice    Int           // Đơn giá khớp
+  totalPrice   Int           // Thành tiền (qty * unitPrice)
+  note         String?       // Lý do chọn NCC
+  isFallback   Boolean       @default(false)
+  
+  orderBatch   OrderBatch    @relation(fields: [orderBatchId], references: [id], onDelete: Cascade)
+  kitchen      Kitchen       @relation(fields: [kitchenId], references: [id], onDelete: Cascade)
+  item         VegetableItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier     Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime      @default(now())
+
+  @@index([orderBatchId])
+  @@index([kitchenId])
+}
