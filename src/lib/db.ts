@@ -6,6 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 
 const databaseUrl =
   process.env.DATABASE_URL ||
+  process.env.POSTGRES_PRISMA_DATABASE_URL ||
   process.env.POSTGRES_PRISMA_URL ||
   process.env.POSTGRES_URL;
 
