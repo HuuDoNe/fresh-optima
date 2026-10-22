@@ -360,9 +360,18 @@ export default function FreshOptimaApp() {
     phone: string,
     note: string
   ) => {
-    await saveSupplierSelfProfileAction(supId, name, phone, note);
-    await loadState(workingDate);
-    notify("Đã cập nhật thông tin nhà cung cấp");
+    try {
+      const res = await saveSupplierSelfProfileAction(supId, name, phone, note);
+      if (res && !res.success) {
+        notify(`Lỗi: ${res.error}`, "warn");
+        return;
+      }
+      await loadState(workingDate);
+      notify("Đã cập nhật thông tin nhà cung cấp");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Lỗi lưu thông tin";
+      notify(`Lỗi: ${msg}`, "warn");
+    }
   };
 
   // Admin Supplier CRUD
@@ -372,9 +381,18 @@ export default function FreshOptimaApp() {
     phone: string,
     note: string
   ) => {
-    await saveSupplierAction(id, name, phone, note);
-    await loadState(workingDate);
-    notify(id ? `Đã cập nhật ${name}` : `Đã thêm NCC ${name}`);
+    try {
+      const res = await saveSupplierAction(id, name, phone, note, workingDate);
+      if (res && !res.success) {
+        notify(`Lỗi: ${res.error}`, "warn");
+        return;
+      }
+      await loadState(workingDate);
+      notify(id ? `Đã cập nhật ${name}` : `Đã thêm NCC ${name}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Lỗi lưu nhà cung cấp";
+      notify(`Lỗi: ${msg}`, "warn");
+    }
   };
 
   const handleDeleteSupplier = (sup: SupplierData) => {
@@ -388,7 +406,11 @@ export default function FreshOptimaApp() {
       description: `Bạn có chắc muốn xóa "${sup.name}" khỏi danh sách?`,
       onConfirm: async () => {
         try {
-          await deleteSupplierAction(sup.id);
+          const res = await deleteSupplierAction(sup.id);
+          if (res && !res.success) {
+            notify(`Lỗi: ${res.error}`, "warn");
+            return;
+          }
           await loadState(workingDate);
           notify(`Đã xóa ${sup.name}`);
         } catch {
@@ -404,9 +426,18 @@ export default function FreshOptimaApp() {
     name: string,
     note: string
   ) => {
-    await saveKitchenAction(id, name, note);
-    await loadState(workingDate);
-    notify(id ? `Đã cập nhật ${name}` : `Đã thêm ${name}`);
+    try {
+      const res = await saveKitchenAction(id, name, note);
+      if (res && !res.success) {
+        notify(`Lỗi: ${res.error}`, "warn");
+        return;
+      }
+      await loadState(workingDate);
+      notify(id ? `Đã cập nhật ${name}` : `Đã thêm ${name}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Lỗi lưu bếp";
+      notify(`Lỗi: ${msg}`, "warn");
+    }
   };
 
   const handleDeleteKitchen = async (kitchenId: string) => {
@@ -417,7 +448,11 @@ export default function FreshOptimaApp() {
       description: `Xóa "${k ? k.name : ""}" và toàn bộ số lượng đang nhập của bếp này?`,
       onConfirm: async () => {
         try {
-          await deleteKitchenAction(kitchenId);
+          const res = await deleteKitchenAction(kitchenId);
+          if (res && !res.success) {
+            notify(`Lỗi: ${res.error}`, "warn");
+            return;
+          }
           setKitchenOrders((prev) => {
             const next = { ...prev };
             delete next[kitchenId];
@@ -434,9 +469,18 @@ export default function FreshOptimaApp() {
 
   // Item CRUD
   const handleSaveItem = async (name: string, unit: string, basePrice: number) => {
-    await saveVegetableItemAction(name, unit, basePrice, workingDate);
-    await loadState(workingDate);
-    notify(`Đã thêm mặt hàng "${name}"`);
+    try {
+      const res = await saveVegetableItemAction(name, unit, basePrice, workingDate);
+      if (res && !res.success) {
+        notify(`Lỗi: ${res.error}`, "warn");
+        return;
+      }
+      await loadState(workingDate);
+      notify(`Đã thêm mặt hàng "${name}"`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Lỗi thêm mặt hàng";
+      notify(`Lỗi: ${msg}`, "warn");
+    }
   };
 
   const handleDeleteItem = (item: VegetableItemData) => {

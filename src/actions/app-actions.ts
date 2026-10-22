@@ -231,13 +231,18 @@ export async function saveSupplierSelfProfileAction(
   phone: string,
   note: string
 ) {
-  await db.supplier.update({
-    where: { id: supplierId },
-    data: { name: name.trim(), phone: phone.trim(), note: note.trim() },
-  });
+  try {
+    await db.supplier.update({
+      where: { id: supplierId },
+      data: { name: name.trim(), phone: phone.trim(), note: note.trim() },
+    });
 
-  revalidatePath("/");
-  return { success: true };
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi lưu thông tin NCC";
+    return { success: false, error: msg };
+  }
 }
 
 export async function saveSupplierAction(
@@ -245,47 +250,73 @@ export async function saveSupplierAction(
   name: string,
   phone: string,
   note: string,
+  dateStr?: string,
   color?: string
 ) {
-  const colors = ["#059669", "#2563EB", "#D97706", "#7C3AED", "#E11D48", "#0891B2"];
-  if (id) {
-    await db.supplier.update({
-      where: { id },
-      data: { name: name.trim(), phone: phone.trim(), note: note.trim() },
-    });
-  } else {
-    const count = await db.supplier.count();
-    const assignedColor = color || colors[count % colors.length];
-    const newSup = await db.supplier.create({
-      data: {
-        name: name.trim(),
-        phone: phone.trim(),
-        note: note.trim(),
-        color: assignedColor,
-      },
-    });
+  try {
+    const colors = ["#059669", "#2563EB", "#D97706", "#7C3AED", "#E11D48", "#0891B2"];
+    if (id) {
+      await db.supplier.update({
+        where: { id },
+        data: { name: name.trim(), phone: phone.trim(), note: note.trim() },
+      });
+    } else {
+      const count = await db.supplier.count();
+      const assignedColor = color || colors[count % colors.length];
+      const newSup = await db.supplier.create({
+        data: {
+          name: name.trim(),
+          phone: phone.trim(),
+          note: note.trim(),
+          color: assignedColor,
+        },
+      });
 
-    // Populate user account for this supplier
-    await db.user.create({
-      data: {
-        username: `ncc_${newSup.id}`,
-        role: "supplier",
-        supplierId: newSup.id,
-      },
-    });
+      // Populate quotes for existing items for this new supplier
+      const items = await db.vegetableItem.findMany();
+      const targetDate = dateStr || new Date().toISOString().split("T")[0];
+      for (const item of items) {
+        await db.dailyQuote.upsert({
+          where: {
+            date_itemId_supplierId: {
+              date: targetDate,
+              itemId: item.id,
+              supplierId: newSup.id,
+            },
+          },
+          update: {},
+          create: {
+            date: targetDate,
+            itemId: item.id,
+            supplierId: newSup.id,
+            price: item.basePrice,
+            inStock: true,
+          },
+        });
+      }
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi lưu nhà cung cấp";
+    console.error("saveSupplierAction error:", err);
+    return { success: false, error: msg };
   }
-
-  revalidatePath("/");
-  return { success: true };
 }
 
 export async function deleteSupplierAction(id: string) {
-  const count = await db.supplier.count();
-  if (count <= 1) throw new Error("Phải giữ lại ít nhất 1 nhà cung cấp");
+  try {
+    const count = await db.supplier.count();
+    if (count <= 1) throw new Error("Phải giữ lại ít nhất 1 nhà cung cấp");
 
-  await db.supplier.delete({ where: { id } });
-  revalidatePath("/");
-  return { success: true };
+    await db.supplier.delete({ where: { id } });
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi xóa nhà cung cấp";
+    return { success: false, error: msg };
+  }
 }
 
 export async function saveKitchenAction(
@@ -294,35 +325,45 @@ export async function saveKitchenAction(
   note: string,
   color?: string
 ) {
-  const colors = ["#059669", "#2563EB", "#D97706", "#7C3AED", "#E11D48", "#0891B2"];
-  if (id) {
-    await db.kitchen.update({
-      where: { id },
-      data: { name: name.trim(), note: note.trim() },
-    });
-  } else {
-    const count = await db.kitchen.count();
-    const assignedColor = color || colors[count % colors.length];
-    await db.kitchen.create({
-      data: {
-        name: name.trim(),
-        note: note.trim(),
-        color: assignedColor,
-      },
-    });
-  }
+  try {
+    const colors = ["#059669", "#2563EB", "#D97706", "#7C3AED", "#E11D48", "#0891B2"];
+    if (id) {
+      await db.kitchen.update({
+        where: { id },
+        data: { name: name.trim(), note: note.trim() },
+      });
+    } else {
+      const count = await db.kitchen.count();
+      const assignedColor = color || colors[count % colors.length];
+      await db.kitchen.create({
+        data: {
+          name: name.trim(),
+          note: note.trim(),
+          color: assignedColor,
+        },
+      });
+    }
 
-  revalidatePath("/");
-  return { success: true };
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi lưu bếp ăn";
+    return { success: false, error: msg };
+  }
 }
 
 export async function deleteKitchenAction(id: string) {
-  const count = await db.kitchen.count();
-  if (count <= 1) throw new Error("Phải giữ lại ít nhất 1 bếp ăn");
+  try {
+    const count = await db.kitchen.count();
+    if (count <= 1) throw new Error("Phải giữ lại ít nhất 1 bếp ăn");
 
-  await db.kitchen.delete({ where: { id } });
-  revalidatePath("/");
-  return { success: true };
+    await db.kitchen.delete({ where: { id } });
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi xóa bếp ăn";
+    return { success: false, error: msg };
+  }
 }
 
 export async function saveVegetableItemAction(
@@ -331,35 +372,45 @@ export async function saveVegetableItemAction(
   basePrice: number,
   dateStr: string
 ) {
-  const item = await db.vegetableItem.create({
-    data: {
-      name: name.trim(),
-      unit: unit.trim() || "kg",
-      basePrice: Math.max(500, basePrice || 20000),
-    },
-  });
-
-  const suppliers = await db.supplier.findMany();
-  for (const s of suppliers) {
-    await db.dailyQuote.create({
+  try {
+    const item = await db.vegetableItem.create({
       data: {
-        date: dateStr,
-        itemId: item.id,
-        supplierId: s.id,
-        price: item.basePrice,
-        inStock: true,
+        name: name.trim(),
+        unit: unit.trim() || "kg",
+        basePrice: Math.max(500, basePrice || 20000),
       },
     });
-  }
 
-  revalidatePath("/");
-  return { success: true, item };
+    const suppliers = await db.supplier.findMany();
+    for (const s of suppliers) {
+      await db.dailyQuote.create({
+        data: {
+          date: dateStr,
+          itemId: item.id,
+          supplierId: s.id,
+          price: item.basePrice,
+          inStock: true,
+        },
+      });
+    }
+
+    revalidatePath("/");
+    return { success: true, item };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi thêm mặt hàng";
+    return { success: false, error: msg };
+  }
 }
 
 export async function deleteVegetableItemAction(id: string) {
-  await db.vegetableItem.delete({ where: { id } });
-  revalidatePath("/");
-  return { success: true };
+  try {
+    await db.vegetableItem.delete({ where: { id } });
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Lỗi xóa mặt hàng";
+    return { success: false, error: msg };
+  }
 }
 
 export async function commitOrderBatchAction(
