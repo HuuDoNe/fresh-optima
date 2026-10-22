@@ -1,0 +1,2521 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshOptima — Hệ Thống Tối Ưu Đặt Hàng Rau Củ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono for crisp numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        canvas: '#FAFAFA',
+                        surface: '#FFFFFF',
+                        ink: '#09090B',
+                        muted: '#71717A',
+                        line: '#E4E4E7'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAFAFA;
+            color: #09090B;
+            letter-spacing: -0.011em;
+        }
+        .tnum {
+            font-variant-numeric: tabular-nums;
+        }
+        /* Clean number inputs without spin buttons */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        /* Custom subtle scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4D4D8;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A1A1AA;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-view {
+            animation: fadeSlide 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#FAFAFA] text-zinc-900 selection:bg-emerald-600 selection:text-white">
+
+    <!-- ==========================================
+         TOP COMMAND HEADER (NORDIC / SWISS BAR)
+         ========================================== -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-zinc-200">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Left: Brand Identity & Active Mode Pill -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-xs">
+                    FO
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm tracking-tight text-zinc-950">FreshOptima</span>
+                        <span id="header-role-badge" class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 border border-zinc-200">
+                            Quản lý Thu mua
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-zinc-500 hidden sm:block">Hệ thống tối ưu báo giá & đặt hàng rau củ theo từng bếp</p>
+                </div>
+            </div>
+
+            <!-- Center: Admin Main Navigation (Hidden in Supplier Mode) -->
+            <nav id="admin-top-nav" class="hidden md:flex items-center bg-zinc-100/90 p-1 rounded-lg border border-zinc-200/80">
+                <button onclick="switchAdminTab('quotes')" id="nav-btn-quotes" class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-2">
+                    <span class="w-4 h-4 rounded text-[10px] flex items-center justify-center bg-zinc-200/70 text-zinc-700 font-mono">1</span>
+                    <span>Báo Giá Hàng Ngày</span>
+                </button>
+                <button onclick="switchAdminTab('orders')" id="nav-btn-orders" class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-2">
+                    <span class="w-4 h-4 rounded text-[10px] flex items-center justify-center bg-zinc-200/70 text-zinc-700 font-mono">2</span>
+                    <span>Đặt Hàng Từng Bếp</span>
+                </button>
+                <button onclick="switchAdminTab('reports')" id="nav-btn-reports" class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-2">
+                    <span class="w-4 h-4 rounded text-[10px] flex items-center justify-center bg-zinc-200/70 text-zinc-700 font-mono">3</span>
+                    <span>Báo Cáo Chi Phí</span>
+                </button>
+            </nav>
+
+            <!-- Right: Date Picker & Role Switcher (RBAC) -->
+            <div class="flex items-center gap-2.5">
+                <!-- Working Date Selector -->
+                <div class="flex items-center bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 gap-2">
+                    <i class="fa-regular fa-calendar text-zinc-400 text-xs"></i>
+                    <input type="date" id="workingDateInput" onchange="handleDateChange(this.value)"
+                        class="text-xs font-semibold text-zinc-800 bg-transparent focus:outline-none cursor-pointer tnum">
+                </div>
+
+                <!-- Quick Role Switcher Select -->
+                <div class="hidden sm:flex items-center bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 gap-1.5">
+                    <span class="text-[11px] font-medium text-zinc-400">Vai trò:</span>
+                    <select id="quickRoleSelect" onchange="handleQuickRoleChange(this.value)"
+                        class="text-xs font-semibold text-zinc-900 bg-transparent focus:outline-none cursor-pointer pr-1">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <!-- Role Switcher Modal Trigger -->
+                <button onclick="openRoleModal()" class="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition flex items-center gap-1.5 shadow-2xs" title="Chuyển đổi tài khoản Admin / Nhà cung cấp">
+                    <i class="fa-solid fa-user-shield text-zinc-500 text-xs"></i>
+                    <span class="hidden lg:inline">Đổi tài khoản</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Admin Navigation Bar -->
+        <div id="admin-mobile-nav" class="md:hidden grid grid-cols-3 gap-1 px-4 py-2 bg-zinc-50 border-t border-zinc-200">
+            <button onclick="switchAdminTab('quotes')" id="m-nav-quotes" class="py-1.5 rounded-md text-xs font-semibold text-center">1. Báo Giá</button>
+            <button onclick="switchAdminTab('orders')" id="m-nav-orders" class="py-1.5 rounded-md text-xs font-semibold text-center">2. Đặt Theo Bếp</button>
+            <button onclick="switchAdminTab('reports')" id="m-nav-reports" class="py-1.5 rounded-md text-xs font-semibold text-center">3. Báo Cáo</button>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         MAIN WORKSPACE CONTAINER
+         ========================================== -->
+    <main class="flex-grow max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+
+        <!-- =====================================================
+             VIEW A: SUPPLIER PORTAL MODE (CỔNG NHÀ CUNG CẤP - RBAC)
+             Strictly isolated to ONLY the logged-in supplier
+             ===================================================== -->
+        <section id="supplier-portal-workspace" class="hidden animate-view space-y-6">
+            
+            <!-- Supplier Top Identity Banner -->
+            <div class="bg-white rounded-xl border border-zinc-200 p-5 sm:p-6 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div class="space-y-1.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Cổng Nhà Cung Cấp Độc Lập
+                        </span>
+                        <span class="text-xs text-zinc-400">•</span>
+                        <span class="text-xs font-medium text-zinc-500">Ngày báo giá: <strong id="sp-banner-date" class="text-zinc-900 tnum"></strong></span>
+                    </div>
+                    <h1 id="sp-banner-name" class="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">Tên Nhà Cung Cấp</h1>
+                    <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-zinc-600">
+                        <span><i class="fa-solid fa-phone text-zinc-400 mr-1.5"></i>Zalo nhận đơn: <strong id="sp-banner-phone" class="text-zinc-900 tnum"></strong></span>
+                        <span><i class="fa-solid fa-location-dot text-zinc-400 mr-1.5"></i>Ghi chú: <span id="sp-banner-note" class="text-zinc-800"></span></span>
+                    </div>
+                </div>
+
+                <!-- Permitted Supplier Actions -->
+                <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <button onclick="openSupplierSelfProfileModal()" class="px-3.5 py-2 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-semibold transition flex items-center gap-2">
+                        <i class="fa-regular fa-pen-to-square text-zinc-500"></i>
+                        <span>Sửa tên & thông tin NCC</span>
+                    </button>
+                    <button onclick="openAddItemModal()" class="px-3.5 py-2 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus text-emerald-600"></i>
+                        <span>Thêm mặt hàng mới</span>
+                    </button>
+                    <button onclick="switchRole('admin')" class="px-3 py-2 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-xs font-medium transition" title="Quay lại quyền Quản lý thu mua">
+                        Thoát cổng NCC
+                    </button>
+                </div>
+            </div>
+
+            <!-- Supplier KPI & Quick Utility Bar -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                <div class="lg:col-span-7 grid grid-cols-3 gap-3">
+                    <div class="bg-white rounded-xl border border-zinc-200 p-4">
+                        <span class="text-[11px] font-medium text-zinc-500">Tổng mặt hàng</span>
+                        <div id="sp-stat-total" class="text-xl font-bold text-zinc-950 mt-0.5 tnum">0</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-zinc-200 p-4">
+                        <span class="text-[11px] font-medium text-emerald-700">Đang còn hàng</span>
+                        <div id="sp-stat-instock" class="text-xl font-bold text-emerald-600 mt-0.5 tnum">0</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-zinc-200 p-4">
+                        <span class="text-[11px] font-medium text-rose-700">Đang báo hết hàng</span>
+                        <div id="sp-stat-outstock" class="text-xl font-bold text-rose-600 mt-0.5 tnum">0</div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 flex flex-wrap items-center justify-end gap-2">
+                    <button onclick="copyYesterdayForLoggedSupplier()" class="px-3 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy text-zinc-400"></i> Sao chép giá hôm qua
+                    </button>
+                    <button onclick="setAllInStockForLoggedSupplier()" class="px-3 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-check-double text-emerald-600"></i> Báo còn hàng tất cả
+                    </button>
+                    <button onclick="notify('Đã lưu & cập nhật bảng báo giá lên hệ thống thu mua!')" class="px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Lưu báo giá
+                    </button>
+                </div>
+            </div>
+
+            <!-- Supplier Exclusive Quote Table (Strictly 5 columns: STT, Mặt hàng, Trạng thái, Đơn giá, Tối đa) -->
+            <!-- Supplier Exclusive Quote Table (Strictly 4 columns: STT, Mặt hàng, Trạng thái, Đơn giá) -->
+            <div class="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden">
+                <div class="px-5 py-4 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-zinc-950">Bảng Cập Nhật Báo Giá Hàng Ngày</h2>
+                        <p class="text-xs text-zinc-500 mt-0.5">Chỉ hiển thị và chỉnh sửa dữ liệu của riêng nhà cung cấp đang đăng nhập</p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-400 text-xs"></i>
+                        <input type="text" id="spSearchInput" oninput="renderSupplierPortal()" placeholder="Tìm mặt hàng rau củ..."
+                            class="w-full pl-8 pr-3 py-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-zinc-400">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                                <th class="py-3 px-5 w-14">#</th>
+                                <th class="py-3 px-5">Mặt hàng rau củ</th>
+                                <th class="py-3 px-5 text-center w-52">Trạng thái hàng</th>
+                                <th class="py-3 px-5 text-right w-60">Đơn giá chào (VNĐ)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sp-quotes-tbody" class="divide-y divide-zinc-100 text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             VIEW B: ADMIN WORKSPACE (QUẢN LÝ THU MUA - 3 TABS)
+             ===================================================== -->
+        <div id="admin-workspace" class="space-y-6">
+
+            <!-- -------------------------------------------------
+                 TAB 1: BÁO GIÁ NHÀ CUNG CẤP HÀNG NGÀY
+                 ------------------------------------------------- -->
+            <section id="admin-tab-quotes" class="animate-view space-y-6">
+                
+                <!-- Supplier Directory Strip (No Star Ratings, Clean Cards) -->
+                <div class="bg-white rounded-xl border border-zinc-200 p-5 shadow-2xs space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-bold text-zinc-950">Danh Sách Nhà Cung Cấp Rau Củ</h2>
+                            <p class="text-xs text-zinc-500 mt-0.5">Quản lý thông tin đầu mối giao hàng hoặc bấm "Vào cổng NCC" để nhập giá dưới góc nhìn nhà cung cấp</p>
+                        </div>
+                        <button onclick="openAdminSupplierModal()" class="px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5 self-start sm:self-auto">
+                            <i class="fa-solid fa-plus text-[11px]"></i> Thêm Nhà Cung Cấp
+                        </button>
+                    </div>
+
+                    <div id="admin-suppliers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Daily Price Comparison Matrix (No Max Qty, Clean Cells) -->
+                <div class="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden">
+                    <div class="p-5 border-b border-zinc-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <h2 class="text-sm font-bold text-zinc-950">Ma Trận So Sánh Báo Giá Hàng Ngày</h2>
+                                <span id="matrix-date-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200 tnum"></span>
+                            </div>
+                            <p class="text-xs text-zinc-500 mt-0.5">Hệ thống tự động đánh dấu <span class="text-emerald-700 font-semibold">Rẻ nhất</span> cho nhà cung cấp có đơn giá thấp nhất và đang còn hàng</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-zinc-400 text-xs"></i>
+                                <input type="text" id="adminMatrixSearch" oninput="renderAdminQuoteMatrix()" placeholder="Tìm mặt hàng..."
+                                    class="pl-8 pr-3 py-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-zinc-400 w-44 sm:w-52">
+                            </div>
+                            <button onclick="copyAllQuotesFromYesterday()" class="px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium transition">
+                                Sao chép hôm qua
+                            </button>
+                            <button onclick="randomizeMarketQuotes()" class="px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium transition">
+                                Giả lập biến động chợ
+                            </button>
+                            <button onclick="openAddItemModal()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus text-[11px]"></i> Thêm Mặt Hàng
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead id="admin-matrix-thead">
+                                <!-- Populated by JS -->
+                            </thead>
+                            <tbody id="admin-matrix-tbody" class="divide-y divide-zinc-200 text-xs">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- -------------------------------------------------
+                 TAB 2: ĐẶT HÀNG THEO TỪNG BẾP (KHÔNG GỘP TỔNG GIỮA CÁC BẾP)
+                 ------------------------------------------------- -->
+            <section id="admin-tab-orders" class="hidden animate-view space-y-6">
+
+                <!-- Top Kitchen Selector & Workflow Bar -->
+                <div class="bg-white rounded-xl border border-zinc-200 p-4 sm:p-5 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="space-y-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-zinc-900">1. Chọn Bếp Để Lên Đơn Riêng:</span>
+                            <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+                                Đặt bếp nào tối ưu riêng bếp đó — Tuyệt đối không gộp cộng dồn mặt hàng giữa các bếp
+                            </span>
+                        </div>
+                        <!-- Kitchen Pills -->
+                        <div id="kitchen-selector-pills" class="flex flex-wrap items-center gap-2 pt-0.5">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <button onclick="openKitchenModal()" class="px-3 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus text-emerald-600"></i> Thêm Bếp
+                        </button>
+                        <button onclick="openKitchenModal(state.activeKitchenId)" class="px-3 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-600 text-xs font-medium transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-pen-to-square"></i> Sửa Bếp Đang Chọn
+                        </button>
+                        <button onclick="fillSampleKitchenOrders()" class="px-3 py-2 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 text-xs font-medium transition">
+                            Nạp đơn mẫu (Bếp A, B, C)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Split View: Left (Kitchen Order Input) & Right (Per-Kitchen Optimal Allocation & Supplier POs) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- LEFT COLUMN (5 Cols): Nhập số lượng rau củ riêng cho Bếp đang chọn -->
+                    <div class="lg:col-span-5 bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden">
+                        <div class="p-4 sm:p-5 border-b border-zinc-200 flex items-center justify-between gap-2">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span id="left-kitchen-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                                    <h3 id="left-kitchen-title" class="text-sm font-bold text-zinc-950">Đơn Đặt Hàng: Bếp A</h3>
+                                </div>
+                                <p id="left-kitchen-note" class="text-xs text-zinc-500 mt-0.5">Nhập số lượng cần mua riêng cho bếp này</p>
+                            </div>
+                            <button onclick="clearCurrentKitchenOrder()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-rose-600 hover:bg-rose-50 transition">
+                                Xóa đơn bếp này
+                            </button>
+                        </div>
+
+                        <!-- Filter bar inside Left Column -->
+                        <div class="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center justify-between gap-2">
+                            <div class="relative flex-grow">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-zinc-400 text-xs"></i>
+                                <input type="text" id="kitchenItemSearch" oninput="renderOrdersWorkspace()" placeholder="Tìm rau củ..."
+                                    class="w-full pl-7 pr-2.5 py-1 text-xs bg-white border border-zinc-200 rounded-md focus:outline-none focus:border-zinc-400">
+                            </div>
+                            <div class="inline-flex rounded-md bg-zinc-200/70 p-0.5 text-[11px] font-semibold shrink-0">
+                                <button type="button" onclick="setKitchenItemFilter('all')" id="filter-btn-all" class="px-2.5 py-1 rounded bg-white text-zinc-900 shadow-2xs">Tất cả</button>
+                                <button type="button" onclick="setKitchenItemFilter('ordered')" id="filter-btn-ordered" class="px-2.5 py-1 rounded text-zinc-600">Đang đặt</button>
+                            </div>
+                        </div>
+
+                        <!-- Item Quantity Inputs List -->
+                        <div id="kitchen-items-input-list" class="divide-y divide-zinc-100 max-h-[600px] overflow-y-auto p-2.5 space-y-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN (7 Cols): Kết quả tối ưu riêng cho Bếp & Phiếu đặt hàng từng Nhà cung cấp -->
+                    <div class="lg:col-span-7 space-y-6">
+
+                        <!-- Optimal Allocation Table (Separate per Kitchen) -->
+                        <div class="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden">
+                            <div class="p-4 sm:p-5 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 id="right-allocation-title" class="text-sm font-bold text-zinc-950">Bảng Phân Bổ Nhà Cung Cấp Tối Ưu</h3>
+                                    </div>
+                                    <p class="text-xs text-zinc-500 mt-0.5">Tự động chọn NCC giá rẻ nhất; nếu nhà cung cấp đó báo hết hàng sẽ tự động chuyển sang NCC rẻ kế tiếp</p>
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button onclick="toggleOrderScopeMode()" id="btn-scope-toggle" class="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold transition">
+                                        Xem tất cả bếp (Tách dòng)
+                                    </button>
+                                    <button onclick="commitOrdersToHistory()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                                        <i class="fa-solid fa-check"></i> Chốt Đơn Lưu Báo Cáo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-zinc-50/80 border-b border-zinc-200 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                                            <th class="py-2.5 px-4">Bếp</th>
+                                            <th class="py-2.5 px-4">Mặt hàng</th>
+                                            <th class="py-2.5 px-3 text-right">SL đặt</th>
+                                            <th class="py-2.5 px-4">Nhà cung cấp được chọn</th>
+                                            <th class="py-2.5 px-3 text-right">Đơn giá</th>
+                                            <th class="py-2.5 px-4 text-right">Thành tiền</th>
+                                            <th class="py-2.5 px-4">Lý do phân bổ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allocation-table-tbody" class="divide-y divide-zinc-100 text-xs">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Supplier Purchase Order Cards (Phiếu Đặt Hàng Từng Nhà Cung Cấp - Tách Riêng Theo Bếp) -->
+                        <div class="bg-white rounded-xl border border-zinc-200 shadow-2xs p-4 sm:p-5 space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-3.5">
+                                <div>
+                                    <h3 class="text-sm font-bold text-zinc-950">Phiếu Đặt Hàng Gửi Từng Nhà Cung Cấp (Tách Riêng Từng Bếp)</h3>
+                                    <p class="text-xs text-zinc-500 mt-0.5">Mỗi bếp được lập thành phiếu riêng biệt để nhà cung cấp cân đóng gói riêng cho từng bếp, tuyệt đối không gộp chung</p>
+                                </div>
+                            </div>
+
+                            <div id="supplier-po-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- -------------------------------------------------
+                 TAB 3: BÁO CÁO CHI PHÍ (NGÀY & TỔNG TIỀN CÁC NHÀ CUNG CẤP + LỊCH SỬ HÔM TRƯỚC)
+                 ------------------------------------------------- -->
+            <section id="admin-tab-reports" class="hidden animate-view space-y-6">
+
+                <!-- Top Control Bar: Filter by Month & Quick View Yesterday -->
+                <div class="bg-white rounded-xl border border-zinc-200 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-sm font-bold text-zinc-950">Báo Cáo Chi Phí Theo Ngày & Tổng Tiền Từng Nhà Cung Cấp</h2>
+                        <p class="text-xs text-zinc-500 mt-0.5">Theo dõi số tiền thanh toán cho từng nhà cung cấp mỗi ngày và tra cứu lại lịch sử đơn hôm trước</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <button onclick="quickInspectYesterday()" class="px-3.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Xem lịch sử hôm trước
+                        </button>
+
+                        <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5">
+                            <span class="text-xs text-zinc-500">Tháng:</span>
+                            <input type="month" id="reportMonthFilter" onchange="renderReportsWorkspace()"
+                                class="text-xs font-semibold text-zinc-900 bg-transparent focus:outline-none tnum">
+                        </div>
+
+                        <button onclick="exportReportCSV()" class="px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-arrow-down"></i> Xuất Excel (CSV)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Totals per Supplier for Selected Month -->
+                <div id="report-supplier-summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Main Table: Ngày & Tổng Tiền Của Các Nhà Cung Cấp -->
+                <div class="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden">
+                    <div class="p-4 sm:p-5 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-zinc-950">Bảng Tổng Hợp Chi Phí Theo Ngày & Nhà Cung Cấp</h3>
+                            <p class="text-xs text-zinc-500 mt-0.5">Bấm vào dòng ngày bất kỳ hoặc nút <strong>"Xem lại đơn"</strong> để xem chi tiết lịch sử ngày đó</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead id="report-daily-matrix-thead">
+                                <!-- Populated by JS -->
+                            </thead>
+                            <tbody id="report-daily-matrix-tbody" class="divide-y divide-zinc-100 text-xs">
+                                <!-- Populated by JS -->
+                            </tbody>
+                            <tfoot id="report-daily-matrix-tfoot" class="bg-zinc-50 border-t-2 border-zinc-200 font-bold text-xs">
+                                <!-- Populated by JS -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Historical Day Inspector Panel (Xem lại lịch sử của hôm trước / ngày được chọn) -->
+                <div id="history-day-inspector" class="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden">
+                    <div class="p-4 sm:p-5 border-b border-zinc-200 bg-zinc-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-sm font-bold text-zinc-950">Chi Tiết Lịch Sử Đơn Hàng Ngày:</h3>
+                                    <span id="inspector-date-badge" class="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-600 text-white tnum">-</span>
+                                </div>
+                                <p class="text-xs text-zinc-500 mt-0.5">Bạn có thể xem lại chi tiết các bếp đã đặt hoặc nạp lại về ngày làm việc để chỉnh sửa</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="shiftInspectorDate(-1)" class="px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition">
+                                ← Ngày trước đó
+                            </button>
+                            <input type="date" id="inspectorDatePicker" onchange="inspectHistoryByDate(this.value)"
+                                class="px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs font-semibold text-zinc-800 tnum focus:outline-none">
+                            <button onclick="shiftInspectorDate(1)" class="px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition">
+                                Ngày kế tiếp →
+                            </button>
+                            <button onclick="loadInspectedDateToWorkspace()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition">
+                                Mở ngày này ở mục Đặt hàng
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="inspector-content-body" class="p-4 sm:p-5">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ==========================================
+         MODALS (NORDIC MINIMALIST DIALOGS)
+         ========================================== -->
+
+    <!-- 1. Role Switcher / Login Modal -->
+    <div id="roleModal" class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 border border-zinc-200 shadow-xl animate-view">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-100 mb-4">
+                <div>
+                    <h3 class="text-sm font-bold text-zinc-950">Chuyển Đổi Vai Trò Sử Dụng (RBAC)</h3>
+                    <p class="text-xs text-zinc-500">Chọn góc nhìn Quản lý Thu mua hoặc Cổng Nhà Cung Cấp</p>
+                </div>
+                <button onclick="closeRoleModal()" class="text-zinc-400 hover:text-zinc-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="role-modal-list" class="space-y-2 max-h-80 overflow-y-auto">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Supplier Self-Edit Modal (For Supplier Portal: Name, Phone, Note ONLY) -->
+    <div id="supplierSelfModal" class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 border border-zinc-200 shadow-xl animate-view">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-100 mb-4">
+                <h3 class="text-sm font-bold text-zinc-950">Cập Nhật Thông Tin Nhà Cung Cấp</h3>
+                <button onclick="closeSupplierSelfModal()" class="text-zinc-400 hover:text-zinc-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveSupplierSelfProfile(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Tên Nhà Cung Cấp *</label>
+                    <input type="text" id="selfSupName" required class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Số điện thoại / Zalo nhận đơn *</label>
+                    <input type="text" id="selfSupPhone" required class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900 tnum">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Ghi chú giao hàng / Địa chỉ</label>
+                    <input type="text" id="selfSupNote" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeSupplierSelfModal()" class="px-3.5 py-2 text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Hủy</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Admin Add/Edit Supplier Modal (Strictly NO Star Rating) -->
+    <div id="adminSupplierModal" class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 border border-zinc-200 shadow-xl animate-view">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-100 mb-4">
+                <h3 id="adminSupModalTitle" class="text-sm font-bold text-zinc-950">Thêm Nhà Cung Cấp</h3>
+                <button onclick="closeAdminSupplierModal()" class="text-zinc-400 hover:text-zinc-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveAdminSupplier(event)" class="space-y-4">
+                <input type="hidden" id="adminSupId">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Tên Nhà Cung Cấp *</label>
+                    <input type="text" id="adminSupName" required placeholder="VD: HTX Rau Sạch Củ Chi" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Số điện thoại / Zalo *</label>
+                    <input type="text" id="adminSupPhone" required placeholder="0909xxxxxx" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900 tnum">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Ghi chú / Địa chỉ</label>
+                    <input type="text" id="adminSupNote" placeholder="VD: Giao trước 5h30 sáng" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAdminSupplierModal()" class="px-3.5 py-2 text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Hủy</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg">Lưu Nhà Cung Cấp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Add Vegetable Item Modal (Strictly NO Category & NO Max Qty) -->
+    <div id="addItemModal" class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 border border-zinc-200 shadow-xl animate-view">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-100 mb-4">
+                <h3 class="text-sm font-bold text-zinc-950">Thêm Mặt Hàng Rau Củ Mới</h3>
+                <button onclick="closeAddItemModal()" class="text-zinc-400 hover:text-zinc-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveNewVegetableItem(event)" class="space-y-4">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-zinc-700 mb-1">Tên mặt hàng rau củ *</label>
+                        <input type="text" id="newItemName" required placeholder="VD: Bông cải xanh" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 mb-1">Đơn vị *</label>
+                        <input type="text" id="newItemUnit" value="kg" required class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Đơn giá chào (VNĐ) *</label>
+                    <input type="number" id="newItemPrice" value="20000" min="500" step="500" required class="w-full px-3 py-2 text-sm font-semibold border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900 tnum">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddItemModal()" class="px-3.5 py-2 text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Hủy</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg">Thêm Mặt Hàng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Add/Edit Kitchen Modal -->
+    <div id="kitchenModal" class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 border border-zinc-200 shadow-xl animate-view">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-100 mb-4">
+                <h3 id="kitchenModalTitle" class="text-sm font-bold text-zinc-950">Thêm Bếp Đặt Hàng</h3>
+                <button onclick="closeKitchenModal()" class="text-zinc-400 hover:text-zinc-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveKitchenForm(event)" class="space-y-4">
+                <input type="hidden" id="editKitchenId">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Tên Bếp *</label>
+                    <input type="text" id="kitchenNameInput" required placeholder="VD: Bếp A, Bếp B..." class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Ghi chú giao nhận của bếp</label>
+                    <input type="text" id="kitchenNoteInput" placeholder="VD: Giao cổng số 1 trước 5h30 sáng" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:border-zinc-900">
+                </div>
+                <div class="flex items-center justify-between pt-2">
+                    <button type="button" id="btnDeleteKitchen" onclick="deleteActiveKitchen()" class="hidden px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg">
+                        Xóa bếp này
+                    </button>
+                    <div class="flex gap-2 ml-auto">
+                        <button type="button" onclick="closeKitchenModal()" class="px-3.5 py-2 text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Hủy</button>
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg">Lưu Bếp</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. Custom Confirmation Modal (No native confirm/alert) -->
+    <div id="confirmDialog" class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 border border-zinc-200 shadow-xl animate-view">
+            <h3 id="confirmDialogTitle" class="text-sm font-bold text-zinc-950">Xác nhận thao tác</h3>
+            <p id="confirmDialogDesc" class="text-xs text-zinc-500 mt-1.5 mb-5"></p>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeConfirmDialog()" class="px-3.5 py-2 text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Hủy</button>
+                <button id="confirmDialogOkBtn" class="px-3.5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Stack -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ==========================================
+         APPLICATION JAVASCRIPT LOGIC
+         ========================================== -->
+    <script>
+        const STORAGE_KEY = 'FRESH_OPTIMA_NORDIC_V7';
+        let state = null;
+        let activeAdminTab = 'quotes';
+        let kitchenItemFilterMode = 'all'; // 'all' | 'ordered'
+        let inspectedHistoryDate = null;
+
+        // Helpers
+        function getTodayISO() {
+            const d = new Date();
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().split('T')[0];
+        }
+
+        function shiftDateISO(dateStr, days) {
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().split('T')[0];
+        }
+
+        function formatVND(val) {
+            return Math.round(val || 0).toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function notify(message, type = 'default') {
+            const wrap = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'warn' ? 'bg-amber-600 text-white' : 'bg-zinc-900 text-white';
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium flex items-center gap-2 animate-view ${bg}`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
+            wrap.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.2s';
+                setTimeout(() => toast.remove(), 200);
+            }, 2600);
+        }
+
+        function askConfirm(title, desc, onConfirm) {
+            document.getElementById('confirmDialogTitle').textContent = title;
+            document.getElementById('confirmDialogDesc').textContent = desc;
+            document.getElementById('confirmDialog').classList.remove('hidden');
+            document.getElementById('confirmDialogOkBtn').onclick = () => {
+                closeConfirmDialog();
+                onConfirm();
+            };
+        }
+
+        function closeConfirmDialog() {
+            document.getElementById('confirmDialog').classList.add('hidden');
+        }
+
+        // Initial Data with Clear Scenarios for Separate Kitchen Ordering
+        function createDefaultState() {
+            const today = getTodayISO();
+
+            const suppliers = [
+                { id: 'sup1', name: 'HTX Rau Sạch Củ Chi', phone: '0918234567', note: 'Giao trước 5h45 sáng, chuẩn VietGAP', color: '#059669' },
+                { id: 'sup2', name: 'Vựa Rau Chợ Đầu Mối', phone: '0987345678', note: 'Nguồn hàng dồi dào, hỗ trợ giao bù', color: '#2563EB' },
+                { id: 'sup3', name: 'Nông Trại Xanh Đà Lạt', phone: '0909123456', note: 'Chuyên củ quả Đà Lạt tươi trong ngày', color: '#D97706' }
+            ];
+
+            const kitchens = [
+                { id: 'k1', name: 'Bếp A', note: 'Bếp Trung Tâm - Giao cổng số 1 trước 5h30', color: '#059669' },
+                { id: 'k2', name: 'Bếp B', note: 'Bếp Khu Văn Phòng - Giao cổng số 2 trước 6h00', color: '#2563EB' },
+                { id: 'k3', name: 'Bếp C', note: 'Bếp Chuyên Gia - Giao sảnh sau trước 6h15', color: '#D97706' }
+            ];
+
+            const items = [
+                { id: 'v1', name: 'Khoai tây Đà Lạt', unit: 'kg', basePrice: 25000 },
+                { id: 'v2', name: 'Hành lá tươi', unit: 'kg', basePrice: 31000 },
+                { id: 'v3', name: 'Củ cải trắng', unit: 'kg', basePrice: 13500 },
+                { id: 'v4', name: 'Cải thảo Đà Lạt', unit: 'kg', basePrice: 15500 },
+                { id: 'v5', name: 'Cà chua Đà Lạt', unit: 'kg', basePrice: 22000 },
+                { id: 'v6', name: 'Rau muống hạt', unit: 'kg', basePrice: 11500 },
+                { id: 'v7', name: 'Cải ngọt', unit: 'kg', basePrice: 13500 },
+                { id: 'v8', name: 'Bí đỏ hồ lô', unit: 'kg', basePrice: 14500 }
+            ];
+
+            const quotes = {};
+            quotes[today] = {
+                // Khoai tây Đà Lạt: sup3 rẻ nhất (24.000đ)
+                'v1': {
+                    'sup1': { price: 27000, inStock: true },
+                    'sup2': { price: 25500, inStock: true },
+                    'sup3': { price: 24000, inStock: true }
+                },
+                // Hành lá tươi: sup1 rẻ nhất 29.500đ
+                'v2': {
+                    'sup1': { price: 29500, inStock: true },
+                    'sup2': { price: 31500, inStock: true },
+                    'sup3': { price: 33000, inStock: true }
+                },
+                // Củ cải trắng: sup2 rẻ nhất 12.500đ
+                'v3': {
+                    'sup1': { price: 14000, inStock: true },
+                    'sup2': { price: 12500, inStock: true },
+                    'sup3': { price: 13500, inStock: true }
+                },
+                // Cải thảo Đà Lạt: sup3 rẻ nhất 15.000đ
+                'v4': {
+                    'sup1': { price: 17000, inStock: true },
+                    'sup2': { price: 16000, inStock: true },
+                    'sup3': { price: 15000, inStock: true }
+                },
+                // Cà chua Đà Lạt: sup3 rẻ nhất (20.500đ) nhưng HẾT HÀNG -> Tự động đặt sang sup2 (22.000đ)
+                'v5': {
+                    'sup1': { price: 23500, inStock: true },
+                    'sup2': { price: 22000, inStock: true },
+                    'sup3': { price: 20500, inStock: false }
+                },
+                // Rau muống hạt: sup1 rẻ nhất 11.000đ
+                'v6': {
+                    'sup1': { price: 11000, inStock: true },
+                    'sup2': { price: 12000, inStock: true },
+                    'sup3': { price: 13000, inStock: true }
+                },
+                // Cải ngọt: sup1 rẻ nhất 13.000đ
+                'v7': {
+                    'sup1': { price: 13000, inStock: true },
+                    'sup2': { price: 14000, inStock: true },
+                    'sup3': { price: 15000, inStock: true }
+                },
+                // Bí đỏ hồ lô: sup2 rẻ nhất 14.000đ
+                'v8': {
+                    'sup1': { price: 15500, inStock: true },
+                    'sup2': { price: 14000, inStock: true },
+                    'sup3': { price: 15000, inStock: true }
+                }
+            };
+
+            const yesterday = shiftDateISO(today, -1);
+            quotes[yesterday] = JSON.parse(JSON.stringify(quotes[today]));
+
+            // Separate orders per kitchen matching user's exact example
+            const kitchenOrders = {
+                'k1': { 'v1': 25, 'v2': 12, 'v3': 20, 'v5': 15 }, // Bếp A: Khoai tây, Hành lá, Củ cải, Cà chua
+                'k2': { 'v1': 25, 'v4': 30, 'v6': 35 },           // Bếp B: Khoai tây, Cải thảo, Rau muống
+                'k3': { 'v7': 25, 'v8': 20, 'v3': 15 }            // Bếp C: Cải ngọt, Bí đỏ, Củ cải
+            };
+
+            // 10 days of realistic order history for Tab 3 (including Yesterday)
+            const history = [];
+            for (let d = 10; d >= 1; d--) {
+                const dateStr = shiftDateISO(today, -d);
+                const lines = [];
+                let dayWeight = 0;
+                let dayCost = 0;
+                let daySaved = 0;
+
+                items.forEach((it, idx) => {
+                    if ((idx + d) % 4 === 0) return;
+                    const kObj = kitchens[(idx + d) % kitchens.length];
+                    const sup = suppliers[(idx + d) % suppliers.length];
+                    const qty = 15 + ((idx * 5 + d * 3) % 25);
+                    const price = it.basePrice - 500 + ((d * 200 + idx * 250) % 1500);
+                    const maxP = price + 1800;
+                    const cost = qty * price;
+                    const saved = qty * (maxP - price);
+
+                    lines.push({
+                        kitchenId: kObj.id,
+                        kitchenName: kObj.name,
+                        itemId: it.id,
+                        itemName: it.name,
+                        unit: it.unit,
+                        supplierId: sup.id,
+                        supplierName: sup.name,
+                        qty,
+                        unitPrice: price,
+                        totalPrice: cost,
+                        savedAmount: saved,
+                        note: idx % 4 === 0 ? 'NCC rẻ nhất hết hàng → Đổi NCC' : 'Đơn giá rẻ nhất'
+                    });
+
+                    dayWeight += qty;
+                    dayCost += cost;
+                    daySaved += saved;
+                });
+
+                history.push({
+                    id: 'ORD-' + dateStr.replace(/-/g, ''),
+                    date: dateStr,
+                    totalWeight: dayWeight,
+                    totalCost: dayCost,
+                    totalSaved: daySaved,
+                    lines
+                });
+            }
+
+            // Sort newest first
+            history.sort((a, b) => b.date.localeCompare(a.date));
+
+            return {
+                session: { role: 'admin', supplierId: null },
+                selectedDate: today,
+                suppliers,
+                kitchens,
+                activeKitchenId: 'k1',
+                viewAllKitchensInOrderTab: false,
+                items,
+                quotes,
+                kitchenOrders,
+                history
+            };
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    state = JSON.parse(raw);
+                    if (!state.selectedDate) state.selectedDate = getTodayISO();
+                    if (!state.session) state.session = { role: 'admin', supplierId: null };
+                    if (!state.kitchens || !state.kitchens.length) {
+                        state.kitchens = [
+                            { id: 'k1', name: 'Bếp A', note: 'Bếp chính', color: '#059669' },
+                            { id: 'k2', name: 'Bếp B', note: 'Bếp phụ', color: '#2563EB' }
+                        ];
+                    }
+                    if (!state.activeKitchenId || !state.kitchens.some(k => k.id === state.activeKitchenId)) {
+                        state.activeKitchenId = state.kitchens[0].id;
+                    }
+                    if (!state.kitchenOrders) state.kitchenOrders = {};
+                    state.kitchens.forEach(k => {
+                        if (!state.kitchenOrders[k.id]) state.kitchenOrders[k.id] = {};
+                    });
+                    ensureQuotesForDate(state.selectedDate);
+                    return;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            state = createDefaultState();
+            saveState();
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function ensureQuotesForDate(dateStr) {
+            if (!state.quotes[dateStr]) state.quotes[dateStr] = {};
+            state.items.forEach((it, iIdx) => {
+                if (!state.quotes[dateStr][it.id]) state.quotes[dateStr][it.id] = {};
+                state.suppliers.forEach((sup, sIdx) => {
+                    if (!state.quotes[dateStr][it.id][sup.id]) {
+                        const delta = ((iIdx + sIdx) % 3 - 1) * 1000;
+                        state.quotes[dateStr][it.id][sup.id] = {
+                            price: Math.max(5000, it.basePrice + delta),
+                            inStock: true
+                        };
+                    }
+                });
+            });
+        }
+
+        // ==========================================
+        // DATE & ROLE-BASED ACCESS CONTROL (RBAC)
+        // ==========================================
+        function handleDateChange(newDate) {
+            if (!newDate) return;
+            state.selectedDate = newDate;
+            ensureQuotesForDate(newDate);
+            saveState();
+            applyWorkspaceByRole();
+            notify(`Đã chuyển sang ngày làm việc ${newDate}`);
+        }
+
+        function populateRoleSelectors() {
+            const select = document.getElementById('quickRoleSelect');
+            if (select) {
+                let html = `<option value="admin" ${state.session.role === 'admin' ? 'selected' : ''}>Quản lý Thu mua (Admin)</option>`;
+                state.suppliers.forEach(s => {
+                    const isSel = state.session.role === 'supplier' && state.session.supplierId === s.id;
+                    html += `<option value="supplier:${s.id}" ${isSel ? 'selected' : ''}>NCC: ${s.name}</option>`;
+                });
+                select.innerHTML = html;
+            }
+
+            const modalList = document.getElementById('role-modal-list');
+            if (modalList) {
+                const isAdmin = state.session.role === 'admin';
+                let mHtml = `
+                    <button onclick="switchRole('admin'); closeRoleModal();"
+                        class="w-full p-3.5 rounded-xl border text-left transition flex items-center justify-between ${isAdmin ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-200 hover:bg-zinc-50 text-zinc-900'}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${isAdmin ? 'bg-white/15 text-white' : 'bg-zinc-100 text-zinc-800'} flex items-center justify-center">
+                                <i class="fa-solid fa-user-tie text-xs"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold">Quản lý Thu mua (Admin)</div>
+                                <div class="text-[11px] ${isAdmin ? 'text-zinc-300' : 'text-zinc-500'}">Toàn quyền so sánh báo giá, đặt hàng theo bếp & xem báo cáo</div>
+                            </div>
+                        </div>
+                        ${isAdmin ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500 text-white">Đang dùng</span>' : ''}
+                    </button>
+                    <div class="pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Tài khoản Cổng Nhà Cung Cấp</div>
+                `;
+
+                state.suppliers.forEach(s => {
+                    const active = state.session.role === 'supplier' && state.session.supplierId === s.id;
+                    mHtml += `
+                        <button onclick="switchRole('supplier', '${s.id}'); closeRoleModal();"
+                            class="w-full p-3 rounded-xl border text-left transition flex items-center justify-between ${active ? 'border-emerald-600 bg-emerald-50/70 text-zinc-950' : 'border-zinc-200 hover:bg-zinc-50 text-zinc-800'}">
+                            <div class="flex items-center gap-3">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${s.color}"></span>
+                                <div>
+                                    <div class="text-xs font-bold">${s.name}</div>
+                                    <div class="text-[11px] text-zinc-500 tnum">Zalo: ${s.phone} · Chỉ sửa giá & trạng thái của riêng NCC này</div>
+                                </div>
+                            </div>
+                            ${active ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white">Đang dùng</span>' : ''}
+                        </button>
+                    `;
+                });
+
+                modalList.innerHTML = mHtml;
+            }
+        }
+
+        function handleQuickRoleChange(val) {
+            if (val === 'admin') {
+                switchRole('admin');
+            } else if (val.startsWith('supplier:')) {
+                const supId = val.split(':')[1];
+                switchRole('supplier', supId);
+            }
+        }
+
+        function openRoleModal() {
+            populateRoleSelectors();
+            document.getElementById('roleModal').classList.remove('hidden');
+        }
+
+        function closeRoleModal() {
+            document.getElementById('roleModal').classList.add('hidden');
+        }
+
+        function switchRole(role, supplierId = null) {
+            if (role === 'supplier') {
+                const targetSup = state.suppliers.find(s => s.id === supplierId) || state.suppliers[0];
+                state.session = { role: 'supplier', supplierId: targetSup.id };
+                notify(`Đã chuyển sang Cổng NCC: ${targetSup.name}`);
+            } else {
+                state.session = { role: 'admin', supplierId: null };
+                notify('Đã chuyển sang quyền Quản lý Thu mua (Admin)');
+            }
+            saveState();
+            applyWorkspaceByRole();
+        }
+
+        function applyWorkspaceByRole() {
+            populateRoleSelectors();
+            const badge = document.getElementById('header-role-badge');
+            const adminNav = document.getElementById('admin-top-nav');
+            const adminMobileNav = document.getElementById('admin-mobile-nav');
+            const spWorkspace = document.getElementById('supplier-portal-workspace');
+            const adminWorkspace = document.getElementById('admin-workspace');
+
+            if (state.session.role === 'supplier') {
+                const sup = state.suppliers.find(s => s.id === state.session.supplierId) || state.suppliers[0];
+                state.session.supplierId = sup.id;
+
+                badge.textContent = `Cổng NCC: ${sup.name}`;
+                badge.className = 'inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200';
+
+                adminNav.classList.add('hidden');
+                adminNav.classList.remove('md:flex');
+                adminMobileNav.classList.add('hidden');
+
+                adminWorkspace.classList.add('hidden');
+                spWorkspace.classList.remove('hidden');
+
+                renderSupplierPortal();
+            } else {
+                badge.textContent = 'Quản lý Thu mua';
+                badge.className = 'inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 border border-zinc-200';
+
+                adminNav.classList.remove('hidden');
+                adminNav.classList.add('md:flex');
+                adminMobileNav.classList.remove('hidden');
+
+                spWorkspace.classList.add('hidden');
+                adminWorkspace.classList.remove('hidden');
+
+                switchAdminTab(activeAdminTab || 'quotes');
+            }
+        }
+
+        // ==========================================
+        // SUPPLIER PORTAL LOGIC (STRICT RBAC - NO MAX QTY)
+        // ==========================================
+        function renderSupplierPortal() {
+            const supId = state.session.supplierId;
+            const sup = state.suppliers.find(s => s.id === supId);
+            if (!sup) return;
+
+            const dateStr = state.selectedDate;
+            ensureQuotesForDate(dateStr);
+            const dayQuotes = state.quotes[dateStr];
+
+            document.getElementById('sp-banner-date').textContent = dateStr;
+            document.getElementById('sp-banner-name').textContent = sup.name;
+            document.getElementById('sp-banner-phone').textContent = sup.phone;
+            document.getElementById('sp-banner-note').textContent = sup.note || 'Chưa có ghi chú';
+
+            let inStockCount = 0;
+            let outStockCount = 0;
+            state.items.forEach(item => {
+                const q = dayQuotes[item.id]?.[supId];
+                if (q && q.inStock) inStockCount++;
+                else outStockCount++;
+            });
+
+            document.getElementById('sp-stat-total').textContent = `${state.items.length} mặt hàng`;
+            document.getElementById('sp-stat-instock').textContent = `${inStockCount} món`;
+            document.getElementById('sp-stat-outstock').textContent = `${outStockCount} món`;
+
+            const kw = (document.getElementById('spSearchInput')?.value || '').toLowerCase().trim();
+            const filtered = state.items.filter(it => it.name.toLowerCase().includes(kw));
+
+            const tbody = document.getElementById('sp-quotes-tbody');
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-zinc-400 text-xs">Không tìm thấy mặt hàng phù hợp.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((item, idx) => {
+                const q = dayQuotes[item.id][supId] || { price: item.basePrice, inStock: true };
+                const active = q.inStock;
+
+                return `
+                    <tr class="hover:bg-zinc-50/80 transition ${!active ? 'bg-rose-50/20' : ''}">
+                        <td class="py-3.5 px-5 text-xs font-mono text-zinc-400">${idx + 1}</td>
+                        <td class="py-3.5 px-5">
+                            <div class="font-semibold text-zinc-900">${item.name}</div>
+                            <div class="text-[11px] text-zinc-400">Đơn vị tính: ${item.unit}</div>
+                        </td>
+                        <td class="py-3.5 px-5 text-center">
+                            <button type="button" onclick="spToggleStock('${item.id}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${active ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}">
+                                <span class="w-1.5 h-1.5 rounded-full ${active ? 'bg-emerald-600' : 'bg-rose-600'}"></span>
+                                <span>${active ? 'Còn hàng' : 'Báo hết hàng'}</span>
+                            </button>
+                        </td>
+                        <td class="py-3.5 px-5 text-right">
+                            <div class="inline-flex items-center justify-end relative">
+                                <input type="number" step="500" min="0"
+                                    value="${q.price}"
+                                    onchange="spUpdateQuote('${item.id}', this.value)"
+                                    class="w-40 pl-3 pr-12 py-1.5 text-right text-sm font-semibold rounded-lg border border-zinc-300 bg-white focus:outline-none focus:border-zinc-900 tnum">
+                                <span class="absolute right-3 text-xs text-zinc-400 pointer-events-none">đ/${item.unit}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function spToggleStock(itemId) {
+            const supId = state.session.supplierId;
+            const q = state.quotes[state.selectedDate][itemId][supId];
+            q.inStock = !q.inStock;
+            saveState();
+            renderSupplierPortal();
+        }
+
+        function spUpdateQuote(itemId, rawVal) {
+            const supId = state.session.supplierId;
+            const q = state.quotes[state.selectedDate][itemId][supId];
+            q.price = Math.max(0, parseFloat(rawVal) || 0);
+            saveState();
+            renderSupplierPortal();
+        }
+
+        function copyYesterdayForLoggedSupplier() {
+            const supId = state.session.supplierId;
+            const prev = shiftDateISO(state.selectedDate, -1);
+            ensureQuotesForDate(prev);
+            state.items.forEach(it => {
+                if (state.quotes[prev]?.[it.id]?.[supId]) {
+                    state.quotes[state.selectedDate][it.id][supId] = JSON.parse(JSON.stringify(state.quotes[prev][it.id][supId]));
+                }
+            });
+            saveState();
+            renderSupplierPortal();
+            notify(`Đã sao chép báo giá ngày ${prev}`);
+        }
+
+        function setAllInStockForLoggedSupplier() {
+            const supId = state.session.supplierId;
+            state.items.forEach(it => {
+                const q = state.quotes[state.selectedDate][it.id][supId];
+                q.inStock = true;
+            });
+            saveState();
+            renderSupplierPortal();
+            notify('Đã bật trạng thái Còn hàng cho tất cả mặt hàng');
+        }
+
+        function openSupplierSelfProfileModal() {
+            const sup = state.suppliers.find(s => s.id === state.session.supplierId);
+            if (!sup) return;
+            document.getElementById('selfSupName').value = sup.name;
+            document.getElementById('selfSupPhone').value = sup.phone;
+            document.getElementById('selfSupNote').value = sup.note || '';
+            document.getElementById('supplierSelfModal').classList.remove('hidden');
+        }
+
+        function closeSupplierSelfModal() {
+            document.getElementById('supplierSelfModal').classList.add('hidden');
+        }
+
+        function saveSupplierSelfProfile(e) {
+            e.preventDefault();
+            const sup = state.suppliers.find(s => s.id === state.session.supplierId);
+            if (!sup) return;
+            sup.name = document.getElementById('selfSupName').value.trim();
+            sup.phone = document.getElementById('selfSupPhone').value.trim();
+            sup.note = document.getElementById('selfSupNote').value.trim();
+            saveState();
+            closeSupplierSelfModal();
+            applyWorkspaceByRole();
+            notify('Đã cập nhật thông tin nhà cung cấp');
+        }
+
+        // ==========================================
+        // ADMIN NAVIGATION & TAB 1 (QUOTES MATRIX)
+        // ==========================================
+        function switchAdminTab(tab) {
+            activeAdminTab = tab;
+            ['quotes', 'orders', 'reports'].forEach(t => {
+                const sec = document.getElementById(`admin-tab-${t}`);
+                const btn = document.getElementById(`nav-btn-${t}`);
+                const mBtn = document.getElementById(`m-nav-${t}`);
+                if (t === tab) {
+                    sec.classList.remove('hidden');
+                    btn.className = 'px-3.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-2 bg-white text-zinc-950 shadow-2xs';
+                    mBtn.className = 'py-1.5 rounded-md text-xs font-semibold text-center bg-zinc-900 text-white';
+                } else {
+                    sec.classList.add('hidden');
+                    btn.className = 'px-3.5 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-2 text-zinc-600 hover:text-zinc-950';
+                    mBtn.className = 'py-1.5 rounded-md text-xs font-semibold text-center text-zinc-600';
+                }
+            });
+            renderActiveAdminTab();
+        }
+
+        function renderActiveAdminTab() {
+            if (activeAdminTab === 'quotes') {
+                renderAdminSuppliersGrid();
+                renderAdminQuoteMatrix();
+            } else if (activeAdminTab === 'orders') {
+                renderOrdersWorkspace();
+            } else if (activeAdminTab === 'reports') {
+                renderReportsWorkspace();
+            }
+        }
+
+        function renderAdminSuppliersGrid() {
+            const grid = document.getElementById('admin-suppliers-grid');
+            grid.innerHTML = state.suppliers.map(sup => `
+                <div class="p-4 rounded-xl border border-zinc-200 bg-zinc-50/40 hover:bg-white hover:border-zinc-300 transition flex flex-col justify-between gap-3">
+                    <div>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${sup.color}"></span>
+                                <h3 class="font-bold text-zinc-950 text-sm">${sup.name}</h3>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="switchRole('supplier', '${sup.id}')"
+                                    class="px-2 py-1 rounded-md text-[11px] font-semibold bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-400 transition">
+                                    Vào cổng NCC
+                                </button>
+                                <button onclick="openAdminSupplierModal('${sup.id}')" class="p-1.5 text-zinc-400 hover:text-zinc-800 rounded" title="Sửa thông tin">
+                                    <i class="fa-regular fa-pen-to-square text-xs"></i>
+                                </button>
+                                ${state.suppliers.length > 1 ? `
+                                <button onclick="deleteSupplier('${sup.id}')" class="p-1.5 text-zinc-400 hover:text-rose-600 rounded" title="Xóa nhà cung cấp">
+                                    <i class="fa-regular fa-trash-can text-xs"></i>
+                                </button>` : ''}
+                            </div>
+                        </div>
+                        <p class="text-xs text-zinc-500 mt-1 line-clamp-1">${sup.note || 'Không có ghi chú'}</p>
+                    </div>
+                    <div class="pt-2.5 border-t border-zinc-200/70 flex items-center justify-between text-xs text-zinc-600">
+                        <span><i class="fa-solid fa-phone text-zinc-400 mr-1.5"></i>Zalo: <strong class="text-zinc-900 tnum">${sup.phone}</strong></span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminQuoteMatrix() {
+            const dateStr = state.selectedDate;
+            ensureQuotesForDate(dateStr);
+            const dayQuotes = state.quotes[dateStr];
+            document.getElementById('matrix-date-badge').textContent = dateStr;
+
+            const thead = document.getElementById('admin-matrix-thead');
+            thead.innerHTML = `
+                <tr class="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                    <th class="py-3 px-4 min-w-[200px]">Mặt hàng rau củ</th>
+                    ${state.suppliers.map(s => `
+                        <th class="py-3 px-4 min-w-[210px] border-l border-zinc-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2 text-zinc-900">
+                                    <span class="w-2 h-2 rounded-full" style="background-color: ${s.color}"></span>
+                                    <span class="normal-case font-bold text-xs">${s.name}</span>
+                                </div>
+                                <span class="text-[10px] font-normal text-zinc-400">Đơn giá / Trạng thái</span>
+                            </div>
+                        </th>
+                    `).join('')}
+                    <th class="py-3 px-3 w-12 text-center border-l border-zinc-200">Xóa</th>
+                </tr>
+            `;
+
+            const kw = (document.getElementById('adminMatrixSearch')?.value || '').toLowerCase().trim();
+            const filtered = state.items.filter(it => it.name.toLowerCase().includes(kw));
+            const tbody = document.getElementById('admin-matrix-tbody');
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="${state.suppliers.length + 2}" class="py-10 text-center text-zinc-400">Không tìm thấy mặt hàng rau củ nào.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const itemQuotes = dayQuotes[item.id] || {};
+                let minPrice = Infinity;
+                state.suppliers.forEach(s => {
+                    const q = itemQuotes[s.id];
+                    if (q && q.inStock && q.price < minPrice) {
+                        minPrice = q.price;
+                    }
+                });
+
+                const cells = state.suppliers.map(sup => {
+                    const q = itemQuotes[sup.id] || { price: item.basePrice, inStock: true };
+                    const active = q.inStock;
+                    const isCheapest = active && q.price === minPrice;
+
+                    return `
+                        <td class="p-3 border-l border-zinc-200 align-middle transition ${isCheapest ? 'bg-emerald-50/40' : (!active ? 'bg-zinc-50/70' : '')}">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="adminToggleStock('${item.id}', '${sup.id}')"
+                                        class="px-2 py-1 rounded text-[11px] font-semibold border transition shrink-0 ${active ? 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50' : 'bg-rose-50 text-rose-700 border-rose-200'}">
+                                        ${active ? '● Còn' : '○ Hết'}
+                                    </button>
+                                    ${isCheapest ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white shrink-0">Rẻ nhất</span>` : ''}
+                                </div>
+                                <div class="relative w-28 shrink-0">
+                                    <input type="number" step="500" min="0" value="${q.price}"
+                                        onchange="adminUpdateQuote('${item.id}', '${sup.id}', this.value)"
+                                        class="w-full pl-2 pr-6 py-1 text-right text-xs font-semibold rounded border ${isCheapest ? 'border-emerald-500 bg-white text-emerald-950' : 'border-zinc-200 bg-white text-zinc-900'} focus:outline-none focus:border-zinc-900 tnum">
+                                    <span class="absolute right-1.5 top-1 text-[10px] text-zinc-400">đ</span>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-zinc-50/50">
+                        <td class="p-3.5 px-4 align-middle">
+                            <div class="font-semibold text-zinc-950 text-sm">${item.name}</div>
+                            <div class="text-[11px] text-zinc-400">Đơn vị: ${item.unit}</div>
+                        </td>
+                        ${cells}
+                        <td class="p-3 text-center border-l border-zinc-200 align-middle">
+                            <button onclick="deleteVegetableItem('${item.id}')" class="text-zinc-300 hover:text-rose-600 transition p-1" title="Xóa mặt hàng">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function adminToggleStock(itemId, supId) {
+            const q = state.quotes[state.selectedDate][itemId][supId];
+            q.inStock = !q.inStock;
+            saveState();
+            renderAdminQuoteMatrix();
+        }
+
+        function adminUpdateQuote(itemId, supId, val) {
+            const q = state.quotes[state.selectedDate][itemId][supId];
+            q.price = Math.max(0, parseFloat(val) || 0);
+            saveState();
+            renderAdminQuoteMatrix();
+        }
+
+        function copyAllQuotesFromYesterday() {
+            const prev = shiftDateISO(state.selectedDate, -1);
+            ensureQuotesForDate(prev);
+            state.quotes[state.selectedDate] = JSON.parse(JSON.stringify(state.quotes[prev]));
+            saveState();
+            renderAdminQuoteMatrix();
+            notify(`Đã sao chép toàn bộ báo giá từ ngày ${prev}`);
+        }
+
+        function randomizeMarketQuotes() {
+            const dayQuotes = state.quotes[state.selectedDate];
+            state.items.forEach(it => {
+                state.suppliers.forEach(s => {
+                    const delta = (Math.floor(Math.random() * 7) - 3) * 500;
+                    const inStock = Math.random() > 0.15;
+                    dayQuotes[it.id][s.id] = {
+                        price: Math.max(6000, it.basePrice + delta),
+                        inStock
+                    };
+                });
+            });
+            saveState();
+            renderAdminQuoteMatrix();
+            notify('Đã giả lập biến động giá chợ hôm nay');
+        }
+
+        // ==========================================
+        // ADMIN TAB 2: PER-KITCHEN SEPARATE ORDERING
+        // Strictly NO merging items across kitchens!
+        // ==========================================
+        function selectKitchen(kitchenId) {
+            state.activeKitchenId = kitchenId;
+            saveState();
+            renderOrdersWorkspace();
+        }
+
+        function setKitchenItemFilter(mode) {
+            kitchenItemFilterMode = mode;
+            const btnAll = document.getElementById('filter-btn-all');
+            const btnOrd = document.getElementById('filter-btn-ordered');
+            if (mode === 'ordered') {
+                btnOrd.className = 'px-2.5 py-1 rounded bg-white text-zinc-900 shadow-2xs';
+                btnAll.className = 'px-2.5 py-1 rounded text-zinc-600';
+            } else {
+                btnAll.className = 'px-2.5 py-1 rounded bg-white text-zinc-900 shadow-2xs';
+                btnOrd.className = 'px-2.5 py-1 rounded text-zinc-600';
+            }
+            renderOrdersWorkspace();
+        }
+
+        function toggleOrderScopeMode() {
+            state.viewAllKitchensInOrderTab = !state.viewAllKitchensInOrderTab;
+            saveState();
+            renderOrdersWorkspace();
+        }
+
+        /**
+         * Core Allocation Engine (No Max Qty limit):
+         * - Evaluates each kitchen's order strictly separately (Bếp A, Bếp B, Bếp C never merge their items together).
+         * - Finds the cheapest supplier that is currently inStock. If the cheapest is out of stock, automatically picks the next cheapest in-stock supplier.
+         */
+        function runPerKitchenAllocation(filterKitchenId = null) {
+            const dateStr = state.selectedDate;
+            ensureQuotesForDate(dateStr);
+            const dayQuotes = state.quotes[dateStr];
+
+            const allLines = [];
+
+            state.kitchens.forEach(kitchen => {
+                const kOrders = state.kitchenOrders[kitchen.id] || {};
+
+                state.items.forEach(item => {
+                    const needQty = parseFloat(kOrders[item.id]) || 0;
+                    if (needQty <= 0) return;
+
+                    const itemQuotes = dayQuotes[item.id] || {};
+                    const candidates = state.suppliers.map(sup => {
+                        const q = itemQuotes[sup.id] || { price: item.basePrice, inStock: false };
+                        return {
+                            supplierId: sup.id,
+                            supplierName: sup.name,
+                            supplierPhone: sup.phone,
+                            supplierColor: sup.color,
+                            price: q.price,
+                            inStock: Boolean(q.inStock)
+                        };
+                    }).sort((a, b) => a.price - b.price);
+
+                    const highestPrice = candidates.reduce((m, c) => Math.max(m, c.price), 0);
+
+                    const outOfStockCheaper = [];
+                    let chosen = null;
+
+                    for (let i = 0; i < candidates.length; i++) {
+                        if (candidates[i].inStock) {
+                            chosen = candidates[i];
+                            break;
+                        } else {
+                            outOfStockCheaper.push(candidates[i].supplierName);
+                        }
+                    }
+
+                    if (chosen) {
+                        const isFallback = outOfStockCheaper.length > 0;
+                        allLines.push({
+                            kitchenId: kitchen.id,
+                            kitchenName: kitchen.name,
+                            kitchenColor: kitchen.color,
+                            kitchenNote: kitchen.note || '',
+                            itemId: item.id,
+                            itemName: item.name,
+                            unit: item.unit,
+                            qty: needQty,
+                            supplierId: chosen.supplierId,
+                            supplierName: chosen.supplierName,
+                            supplierPhone: chosen.supplierPhone,
+                            supplierColor: chosen.supplierColor,
+                            unitPrice: chosen.price,
+                            totalPrice: needQty * chosen.price,
+                            savedAmount: Math.max(0, needQty * (highestPrice - chosen.price)),
+                            note: isFallback ? `${outOfStockCheaper[0]} hết hàng → Đổi sang NCC rẻ kế tiếp` : 'Đơn giá rẻ nhất',
+                            badgeType: isFallback ? 'fallback' : 'best',
+                            unfulfilled: false
+                        });
+                    } else {
+                        allLines.push({
+                            kitchenId: kitchen.id,
+                            kitchenName: kitchen.name,
+                            kitchenColor: kitchen.color,
+                            kitchenNote: kitchen.note || '',
+                            itemId: item.id,
+                            itemName: item.name,
+                            unit: item.unit,
+                            qty: needQty,
+                            supplierId: 'NONE',
+                            supplierName: 'Tất cả NCC hết hàng',
+                            supplierPhone: '-',
+                            supplierColor: '#E11D48',
+                            unitPrice: 0,
+                            totalPrice: 0,
+                            savedAmount: 0,
+                            note: 'Tất cả các NCC đều báo hết mặt hàng này',
+                            badgeType: 'error',
+                            unfulfilled: true
+                        });
+                    }
+                });
+            });
+
+            const scopedLines = filterKitchenId
+                ? allLines.filter(l => l.kitchenId === filterKitchenId)
+                : allLines;
+
+            let requestedKg = 0;
+            let allocatedKg = 0;
+            let totalCost = 0;
+            let totalSaved = 0;
+            let itemCount = 0;
+
+            const targetKitchens = filterKitchenId
+                ? state.kitchens.filter(k => k.id === filterKitchenId)
+                : state.kitchens;
+
+            targetKitchens.forEach(k => {
+                const ko = state.kitchenOrders[k.id] || {};
+                state.items.forEach(it => {
+                    const q = parseFloat(ko[it.id]) || 0;
+                    if (q > 0) {
+                        itemCount++;
+                        requestedKg += q;
+                    }
+                });
+            });
+
+            scopedLines.forEach(l => {
+                if (!l.unfulfilled) {
+                    allocatedKg += l.qty;
+                    totalCost += l.totalPrice;
+                    totalSaved += l.savedAmount;
+                }
+            });
+
+            return {
+                lines: scopedLines,
+                itemCount,
+                requestedKg,
+                allocatedKg,
+                totalCost,
+                totalSaved
+            };
+        }
+
+        function renderOrdersWorkspace() {
+            const dateStr = state.selectedDate;
+            ensureQuotesForDate(dateStr);
+            const dayQuotes = state.quotes[dateStr];
+
+            const activeKitchen = state.kitchens.find(k => k.id === state.activeKitchenId) || state.kitchens[0];
+            state.activeKitchenId = activeKitchen.id;
+
+            // 1. Render Kitchen Selector Pills
+            const pillsContainer = document.getElementById('kitchen-selector-pills');
+            pillsContainer.innerHTML = state.kitchens.map(k => {
+                const isSelected = k.id === activeKitchen.id;
+                const ko = state.kitchenOrders[k.id] || {};
+                let cnt = 0;
+                let kg = 0;
+                Object.values(ko).forEach(v => {
+                    const n = parseFloat(v) || 0;
+                    if (n > 0) { cnt++; kg += n; }
+                });
+
+                return `
+                    <button type="button" onclick="selectKitchen('${k.id}')"
+                        class="px-3.5 py-2 rounded-lg text-xs font-semibold border transition flex items-center gap-2 ${isSelected ? 'bg-zinc-900 text-white border-zinc-900 shadow-2xs' : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'}">
+                        <span class="w-2 h-2 rounded-full" style="background-color: ${k.color}"></span>
+                        <span>${k.name}</span>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] tnum ${isSelected ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600'}">
+                            ${cnt} món · ${kg}kg
+                        </span>
+                    </button>
+                `;
+            }).join('');
+
+            // 2. Render Left Column (Inputs for Active Kitchen)
+            document.getElementById('left-kitchen-dot').style.backgroundColor = activeKitchen.color;
+            document.getElementById('left-kitchen-title').textContent = `Đơn Đặt Hàng Riêng: ${activeKitchen.name}`;
+            document.getElementById('left-kitchen-note').textContent = activeKitchen.note || `Nhập số lượng mặt hàng riêng cho ${activeKitchen.name}`;
+
+            const kOrders = state.kitchenOrders[activeKitchen.id] || {};
+            const kw = (document.getElementById('kitchenItemSearch')?.value || '').toLowerCase().trim();
+
+            const filteredItems = state.items.filter(it => {
+                if (!it.name.toLowerCase().includes(kw)) return false;
+                if (kitchenItemFilterMode === 'ordered' && !(parseFloat(kOrders[it.id]) > 0)) return false;
+                return true;
+            });
+
+            const inputListEl = document.getElementById('kitchen-items-input-list');
+            if (!filteredItems.length) {
+                inputListEl.innerHTML = `<div class="py-10 text-center text-xs text-zinc-400">Không có mặt hàng nào trong bộ lọc của ${activeKitchen.name}.</div>`;
+            } else {
+                inputListEl.innerHTML = filteredItems.map(item => {
+                    const qty = parseFloat(kOrders[item.id]) || 0;
+                    let bestPrice = Infinity;
+                    let bestSup = '';
+
+                    state.suppliers.forEach(s => {
+                        const q = dayQuotes[item.id]?.[s.id];
+                        if (q && q.inStock && q.price < bestPrice) {
+                            bestPrice = q.price;
+                            bestSup = s.name;
+                        }
+                    });
+
+                    return `
+                        <div class="p-2.5 rounded-lg flex items-center justify-between gap-3 transition ${qty > 0 ? 'bg-emerald-50/50 border border-emerald-200' : 'hover:bg-zinc-50 border border-transparent'}">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold text-zinc-900 text-xs sm:text-sm">${item.name}</span>
+                                    ${qty > 0 ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">${activeKitchen.name}</span>` : ''}
+                                </div>
+                                <div class="text-[11px] text-zinc-500 truncate mt-0.5">
+                                    ${bestPrice < Infinity
+                                        ? `Giá tốt nhất: <strong class="text-emerald-700 tnum">${formatVND(bestPrice)}/${item.unit}</strong> (${bestSup})`
+                                        : `<span class="text-rose-600 font-medium">Tất cả NCC hết hàng</span>`}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" onclick="adjustKitchenQty('${item.id}', -5)"
+                                    class="w-7 h-7 rounded-md border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-bold">-</button>
+                                <div class="relative">
+                                    <input type="number" min="0" step="1"
+                                        value="${qty || ''}" placeholder="0"
+                                        oninput="updateKitchenQty('${item.id}', this.value)"
+                                        class="w-20 pl-2 pr-7 py-1 text-right text-xs sm:text-sm font-bold rounded-md border ${qty > 0 ? 'border-emerald-600 bg-white text-zinc-950' : 'border-zinc-200 bg-zinc-50 text-zinc-500'} focus:outline-none focus:border-zinc-900 tnum">
+                                    <span class="absolute right-2 top-1.5 text-[10px] text-zinc-400 pointer-events-none">${item.unit}</span>
+                                </div>
+                                <button type="button" onclick="adjustKitchenQty('${item.id}', 5)"
+                                    class="w-7 h-7 rounded-md border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-bold">+</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 3. Render Right Column (Allocation & POs)
+            renderRightAllocationPanel();
+        }
+
+        function updateKitchenQty(itemId, rawVal) {
+            const kId = state.activeKitchenId;
+            if (!state.kitchenOrders[kId]) state.kitchenOrders[kId] = {};
+            state.kitchenOrders[kId][itemId] = Math.max(0, parseFloat(rawVal) || 0);
+            saveState();
+            renderRightAllocationPanel();
+            // Also refresh kitchen pills count lightly
+            const pillsContainer = document.getElementById('kitchen-selector-pills');
+            if (pillsContainer) {
+                const activeKitchen = state.kitchens.find(k => k.id === state.activeKitchenId);
+                pillsContainer.innerHTML = state.kitchens.map(k => {
+                    const isSelected = k.id === activeKitchen.id;
+                    const ko = state.kitchenOrders[k.id] || {};
+                    let cnt = 0; let kg = 0;
+                    Object.values(ko).forEach(v => { const n = parseFloat(v) || 0; if (n > 0) { cnt++; kg += n; } });
+                    return `
+                        <button type="button" onclick="selectKitchen('${k.id}')"
+                            class="px-3.5 py-2 rounded-lg text-xs font-semibold border transition flex items-center gap-2 ${isSelected ? 'bg-zinc-900 text-white border-zinc-900 shadow-2xs' : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'}">
+                            <span class="w-2 h-2 rounded-full" style="background-color: ${k.color}"></span>
+                            <span>${k.name}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] tnum ${isSelected ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600'}">
+                                ${cnt} món · ${kg}kg
+                            </span>
+                        </button>
+                    `;
+                }).join('');
+            }
+        }
+
+        function adjustKitchenQty(itemId, delta) {
+            const kId = state.activeKitchenId;
+            if (!state.kitchenOrders[kId]) state.kitchenOrders[kId] = {};
+            const cur = parseFloat(state.kitchenOrders[kId][itemId]) || 0;
+            state.kitchenOrders[kId][itemId] = Math.max(0, cur + delta);
+            saveState();
+            renderOrdersWorkspace();
+        }
+
+        function clearCurrentKitchenOrder() {
+            const k = state.kitchens.find(x => x.id === state.activeKitchenId);
+            state.kitchenOrders[state.activeKitchenId] = {};
+            saveState();
+            renderOrdersWorkspace();
+            notify(`Đã xóa danh sách đặt hàng của ${k ? k.name : 'bếp'}`);
+        }
+
+        function fillSampleKitchenOrders() {
+            if (state.kitchens[0]) state.kitchenOrders[state.kitchens[0].id] = { 'v1': 25, 'v2': 12, 'v3': 20, 'v5': 15 };
+            if (state.kitchens[1]) state.kitchenOrders[state.kitchens[1].id] = { 'v1': 25, 'v4': 30, 'v6': 35 };
+            if (state.kitchens[2]) state.kitchenOrders[state.kitchens[2].id] = { 'v7': 25, 'v8': 20, 'v3': 15 };
+            saveState();
+            renderOrdersWorkspace();
+            notify('Đã nạp đơn mẫu tách riêng cho từng bếp');
+        }
+
+        function renderRightAllocationPanel() {
+            const activeKitchen = state.kitchens.find(k => k.id === state.activeKitchenId) || state.kitchens[0];
+            const filterKitchenId = state.viewAllKitchensInOrderTab ? null : activeKitchen.id;
+            const res = runPerKitchenAllocation(filterKitchenId);
+
+            // Scope UI updates
+            const toggleBtn = document.getElementById('btn-scope-toggle');
+            const rightTitle = document.getElementById('right-allocation-title');
+
+            if (state.viewAllKitchensInOrderTab) {
+                toggleBtn.textContent = `Chỉ xem riêng ${activeKitchen.name}`;
+                rightTitle.textContent = 'Bảng Phân Bổ Tối Ưu (Tất Cả Bếp - Không Gộp Dòng)';
+            } else {
+                toggleBtn.textContent = 'Xem tất cả bếp (Tách dòng)';
+                rightTitle.textContent = `Bảng Phân Bổ Nhà Cung Cấp Tối Ưu Cho Riêng ${activeKitchen.name}`;
+            }
+
+            // Allocation Table Rows
+            const tbody = document.getElementById('allocation-table-tbody');
+            if (!res.lines.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-zinc-400">Chưa có mặt hàng nào được đặt cho phạm vi đang chọn.</td></tr>`;
+            } else {
+                const badgeStyles = {
+                    best: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                    fallback: 'bg-amber-50 text-amber-800 border-amber-200',
+                    split: 'bg-blue-50 text-blue-800 border-blue-200',
+                    error: 'bg-rose-50 text-rose-800 border-rose-200'
+                };
+
+                tbody.innerHTML = res.lines.map(l => `
+                    <tr class="hover:bg-zinc-50/80">
+                        <td class="py-2.5 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold text-white" style="background-color: ${l.kitchenColor}">
+                                ${l.kitchenName}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-4 font-semibold text-zinc-900">${l.itemName}</td>
+                        <td class="py-2.5 px-3 text-right font-bold text-zinc-900 tnum">${l.qty} ${l.unit}</td>
+                        <td class="py-2.5 px-4">
+                            <div class="flex items-center gap-1.5 font-medium text-zinc-800">
+                                <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${l.supplierColor}"></span>
+                                <span>${l.supplierName}</span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-3 text-right text-zinc-600 tnum">${l.unfulfilled ? '-' : formatVND(l.unitPrice)}</td>
+                        <td class="py-2.5 px-4 text-right font-bold text-emerald-700 tnum">${l.unfulfilled ? '-' : formatVND(l.totalPrice)}</td>
+                        <td class="py-2.5 px-4">
+                            <span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium border ${badgeStyles[l.badgeType]}">
+                                ${l.note}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Supplier Purchase Order Cards (Strictly keeping each kitchen as a separate sub-order block)
+            const poGrid = document.getElementById('supplier-po-cards-grid');
+            const validLines = res.lines.filter(l => !l.unfulfilled);
+            if (!validLines.length) {
+                poGrid.innerHTML = `<div class="col-span-full py-8 text-center text-xs text-zinc-400">Nhập số lượng mặt hàng bên trái để hệ thống tạo Phiếu Đặt Hàng Nhà Cung Cấp.</div>`;
+                return;
+            }
+
+            const supGroups = {};
+            validLines.forEach(l => {
+                if (!supGroups[l.supplierId]) {
+                    supGroups[l.supplierId] = {
+                        supplierId: l.supplierId,
+                        supplierName: l.supplierName,
+                        supplierPhone: l.supplierPhone,
+                        supplierColor: l.supplierColor,
+                        kitchenBlocks: {},
+                        totalKg: 0,
+                        totalCost: 0
+                    };
+                }
+                const g = supGroups[l.supplierId];
+                if (!g.kitchenBlocks[l.kitchenId]) {
+                    g.kitchenBlocks[l.kitchenId] = {
+                        kitchenId: l.kitchenId,
+                        kitchenName: l.kitchenName,
+                        kitchenColor: l.kitchenColor,
+                        kitchenNote: l.kitchenNote,
+                        items: [],
+                        subKg: 0,
+                        subCost: 0
+                    };
+                }
+                g.kitchenBlocks[l.kitchenId].items.push(l);
+                g.kitchenBlocks[l.kitchenId].subKg += l.qty;
+                g.kitchenBlocks[l.kitchenId].subCost += l.totalPrice;
+                g.totalKg += l.qty;
+                g.totalCost += l.totalPrice;
+            });
+
+            poGrid.innerHTML = Object.values(supGroups).map(g => {
+                const kBlocks = Object.values(g.kitchenBlocks);
+                return `
+                    <div class="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 flex flex-col justify-between gap-3">
+                        <div class="space-y-3">
+                            <!-- Supplier Card Header -->
+                            <div class="flex items-center justify-between border-b border-zinc-200 pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${g.supplierColor}"></span>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-zinc-950">${g.supplierName}</h4>
+                                        <span class="text-[11px] text-zinc-500 tnum">Zalo: ${g.supplierPhone}</span>
+                                    </div>
+                                </div>
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-white border border-zinc-200 text-zinc-700">
+                                    ${kBlocks.length} đơn bếp riêng
+                                </span>
+                            </div>
+
+                            <!-- Separate Kitchen Blocks inside Supplier Card -->
+                            <div class="space-y-2.5">
+                                ${kBlocks.map(kb => `
+                                    <div class="bg-white rounded-lg border border-zinc-200 p-3">
+                                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white" style="background-color: ${kb.kitchenColor}">
+                                                    ĐƠN RIÊNG: ${kb.kitchenName}
+                                                </span>
+                                                <span class="text-[11px] text-zinc-400 tnum">${kb.items.length} món (${kb.subKg}kg)</span>
+                                            </div>
+                                            <button type="button" onclick="copyZaloOrder('${g.supplierId}', '${kb.kitchenId}')"
+                                                class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition flex items-center gap-1">
+                                                <i class="fa-regular fa-copy"></i> Copy riêng ${kb.kitchenName}
+                                            </button>
+                                        </div>
+                                        <div class="space-y-1 text-xs">
+                                            ${kb.items.map(it => `
+                                                <div class="flex items-center justify-between text-zinc-700">
+                                                    <span>${it.itemName}</span>
+                                                    <span class="font-semibold text-zinc-900 tnum">${it.qty} ${it.unit} × ${it.unitPrice.toLocaleString('vi-VN')}đ = ${it.totalPrice.toLocaleString('vi-VN')}đ</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                        <div class="mt-2 pt-1.5 border-t border-zinc-100 flex items-center justify-between text-[11px]">
+                                            <span class="text-zinc-400">Cộng riêng ${kb.kitchenName}:</span>
+                                            <span class="font-bold text-zinc-900 tnum">${formatVND(kb.subCost)}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="pt-2.5 border-t border-zinc-200 space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-zinc-500">Tổng thanh toán NCC (${g.totalKg} kg):</span>
+                                <span class="font-bold text-sm text-emerald-700 tnum">${formatVND(g.totalCost)}</span>
+                            </div>
+                            <button type="button" onclick="copyZaloOrder('${g.supplierId}', null)"
+                                class="w-full py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-regular fa-copy"></i> Copy phiếu Zalo gửi ${g.supplierName}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyZaloOrder(supplierId, specificKitchenId = null) {
+            const activeKitchen = state.kitchens.find(k => k.id === state.activeKitchenId) || state.kitchens[0];
+            const filterId = specificKitchenId || (state.viewAllKitchensInOrderTab ? null : activeKitchen.id);
+            const res = runPerKitchenAllocation(filterId);
+
+            const items = res.lines.filter(l => l.supplierId === supplierId && !l.unfulfilled);
+            if (!items.length) return;
+
+            const supName = items[0].supplierName;
+            const byKitchen = {};
+            items.forEach(it => {
+                if (!byKitchen[it.kitchenId]) {
+                    byKitchen[it.kitchenId] = {
+                        kitchenName: it.kitchenName,
+                        kitchenNote: it.kitchenNote,
+                        list: [],
+                        subTotal: 0
+                    };
+                }
+                byKitchen[it.kitchenId].list.push(it);
+                byKitchen[it.kitchenId].subTotal += it.totalPrice;
+            });
+
+            let total = 0;
+            let msg = `PHIẾU ĐẶT HÀNG RAU CỦ (${state.selectedDate})\nKính gửi NCC: ${supName}\n(Lưu ý: Đóng gói và giao riêng từng bếp, không gộp chung)\n====================\n`;
+
+            Object.values(byKitchen).forEach(kb => {
+                msg += `\n📌 ĐƠN RIÊNG: ${kb.kitchenName.toUpperCase()}${kb.kitchenNote ? ` (${kb.kitchenNote})` : ''}\n`;
+                kb.list.forEach((it, idx) => {
+                    msg += `  ${idx + 1}. ${it.itemName}: ${it.qty} ${it.unit} x ${it.unitPrice.toLocaleString('vi-VN')}đ = ${it.totalPrice.toLocaleString('vi-VN')}đ\n`;
+                });
+                msg += `  -> Cộng ${kb.kitchenName}: ${kb.subTotal.toLocaleString('vi-VN')} VNĐ\n`;
+                total += kb.subTotal;
+            });
+
+            msg += `\n====================\nTỔNG CỘNG: ${total.toLocaleString('vi-VN')} VNĐ`;
+
+            const ta = document.createElement('textarea');
+            ta.value = msg;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            notify(`Đã sao chép phiếu đặt hàng gửi ${supName}`);
+        }
+
+        function commitOrdersToHistory() {
+            const res = runPerKitchenAllocation(null);
+            const validLines = res.lines.filter(l => !l.unfulfilled);
+            if (!validLines.length) {
+                notify('Vui lòng nhập số lượng đặt hàng cho ít nhất 1 bếp trước khi chốt đơn', 'warn');
+                return;
+            }
+
+            const dateStr = state.selectedDate;
+            state.history = state.history.filter(h => h.date !== dateStr);
+            state.history.unshift({
+                id: 'ORD-' + dateStr.replace(/-/g, ''),
+                date: dateStr,
+                totalWeight: res.allocatedKg,
+                totalCost: res.totalCost,
+                totalSaved: res.totalSaved,
+                lines: validLines
+            });
+            state.history.sort((a, b) => b.date.localeCompare(a.date));
+            inspectedHistoryDate = dateStr;
+            saveState();
+
+            notify(`Đã chốt đơn các bếp ngày ${dateStr} vào Báo cáo chi phí`);
+            switchAdminTab('reports');
+        }
+
+        // ==========================================
+        // ADMIN TAB 3: SIMPLIFIED COST REPORTS (NGÀY & TỔNG TIỀN CÁC NCC + LỊCH SỬ HÔM TRƯỚC)
+        // ==========================================
+        function renderReportsWorkspace() {
+            const monthInput = document.getElementById('reportMonthFilter');
+            if (!monthInput.value) monthInput.value = state.selectedDate.slice(0, 7);
+            const monthVal = monthInput.value;
+
+            const ordersInMonth = state.history
+                .filter(h => h.date.startsWith(monthVal))
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            // Calculate monthly totals per supplier
+            const monthSupTotals = {};
+            state.suppliers.forEach(s => { monthSupTotals[s.id] = 0; });
+            let grandMonthTotal = 0;
+
+            ordersInMonth.forEach(dayOrder => {
+                dayOrder.lines.forEach(line => {
+                    if (monthSupTotals[line.supplierId] !== undefined) {
+                        monthSupTotals[line.supplierId] += line.totalPrice;
+                    } else {
+                        monthSupTotals[line.supplierId] = (monthSupTotals[line.supplierId] || 0) + line.totalPrice;
+                    }
+                    grandMonthTotal += line.totalPrice;
+                });
+            });
+
+            // 1. Render Top Supplier Summary Cards
+            const cardsEl = document.getElementById('report-supplier-summary-cards');
+            let cardsHtml = `
+                <div class="bg-zinc-900 text-white p-4 rounded-xl shadow-2xs">
+                    <span class="text-xs font-medium text-zinc-400">Tổng chi phí tháng ${monthVal}</span>
+                    <div class="text-xl font-bold mt-1 tnum">${formatVND(grandMonthTotal)}</div>
+                    <span class="text-[11px] text-zinc-400 mt-1 block">${ordersInMonth.length} ngày có đơn hàng</span>
+                </div>
+            `;
+            state.suppliers.forEach(s => {
+                const supTotal = monthSupTotals[s.id] || 0;
+                cardsHtml += `
+                    <div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-2xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${s.color}"></span>
+                            <span class="text-xs font-semibold text-zinc-700 truncate">${s.name}</span>
+                        </div>
+                        <div class="text-xl font-bold text-zinc-950 mt-1 tnum">${formatVND(supTotal)}</div>
+                        <span class="text-[11px] text-zinc-400 mt-1 block tnum">Zalo: ${s.phone}</span>
+                    </div>
+                `;
+            });
+            cardsEl.innerHTML = cardsHtml;
+
+            // 2. Render Main Daily Matrix Table (Ngày & Tổng tiền từng Nhà cung cấp)
+            const thead = document.getElementById('report-daily-matrix-thead');
+            thead.innerHTML = `
+                <tr class="bg-zinc-50 border-b border-zinc-200 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                    <th class="py-3 px-5">Ngày đặt hàng</th>
+                    ${state.suppliers.map(s => `
+                        <th class="py-3 px-5 text-right">
+                            <div class="inline-flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full" style="background-color: ${s.color}"></span>
+                                <span class="text-zinc-800 normal-case font-bold text-xs">${s.name}</span>
+                            </div>
+                        </th>
+                    `).join('')}
+                    <th class="py-3 px-5 text-right text-zinc-900">Tổng cộng ngày</th>
+                    <th class="py-3 px-5 text-center">Lịch sử</th>
+                </tr>
+            `;
+
+            const tbody = document.getElementById('report-daily-matrix-tbody');
+            const tfoot = document.getElementById('report-daily-matrix-tfoot');
+
+            if (!ordersInMonth.length) {
+                tbody.innerHTML = `<tr><td colspan="${state.suppliers.length + 3}" class="py-10 text-center text-zinc-400">Chưa có dữ liệu đơn hàng trong tháng ${monthVal}.</td></tr>`;
+                tfoot.innerHTML = '';
+            } else {
+                const yesterdayISO = shiftDateISO(state.selectedDate, -1);
+
+                tbody.innerHTML = ordersInMonth.map(dayOrder => {
+                    const perSup = {};
+                    state.suppliers.forEach(s => { perSup[s.id] = 0; });
+                    let rowTotal = 0;
+
+                    dayOrder.lines.forEach(line => {
+                        perSup[line.supplierId] = (perSup[line.supplierId] || 0) + line.totalPrice;
+                        rowTotal += line.totalPrice;
+                    });
+
+                    const isSelected = inspectedHistoryDate === dayOrder.date;
+                    const isYesterday = dayOrder.date === yesterdayISO;
+                    const isToday = dayOrder.date === state.selectedDate;
+
+                    return `
+                        <tr onclick="inspectHistoryByDate('${dayOrder.date}')"
+                            class="cursor-pointer transition ${isSelected ? 'bg-emerald-50/70' : 'hover:bg-zinc-50'}">
+                            <td class="py-3.5 px-5 font-semibold text-zinc-900 tnum">
+                                <div class="flex items-center gap-2">
+                                    <span>${dayOrder.date}</span>
+                                    ${isToday ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-900 text-white">Hôm nay</span>' : ''}
+                                    ${isYesterday ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Hôm trước</span>' : ''}
+                                </div>
+                            </td>
+                            ${state.suppliers.map(s => {
+                                const amt = perSup[s.id] || 0;
+                                return `
+                                    <td class="py-3.5 px-5 text-right font-semibold tnum ${amt > 0 ? 'text-zinc-900' : 'text-zinc-300'}">
+                                        ${amt > 0 ? formatVND(amt) : '0 ₫'}
+                                    </td>
+                                `;
+                            }).join('')}
+                            <td class="py-3.5 px-5 text-right font-bold text-emerald-700 tnum">${formatVND(rowTotal)}</td>
+                            <td class="py-3.5 px-5 text-center" onclick="event.stopPropagation()">
+                                <div class="inline-flex items-center gap-2">
+                                    <button onclick="inspectHistoryByDate('${dayOrder.date}')"
+                                        class="px-2.5 py-1 rounded-md text-xs font-semibold border transition ${isSelected ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'}">
+                                        Xem lại đơn
+                                    </button>
+                                    <button onclick="deleteHistoryDay('${dayOrder.date}')" class="text-zinc-400 hover:text-rose-600 p-1" title="Xóa ngày ${dayOrder.date}">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                tfoot.innerHTML = `
+                    <tr>
+                        <td class="py-3.5 px-5 text-zinc-900">TỔNG CỘNG THÁNG ${monthVal}</td>
+                        ${state.suppliers.map(s => `
+                            <td class="py-3.5 px-5 text-right text-zinc-900 tnum">${formatVND(monthSupTotals[s.id] || 0)}</td>
+                        `).join('')}
+                        <td class="py-3.5 px-5 text-right text-emerald-700 text-sm tnum">${formatVND(grandMonthTotal)}</td>
+                        <td></td>
+                    </tr>
+                `;
+            }
+
+            // 3. Default Inspector to Yesterday (or newest history entry)
+            if (!inspectedHistoryDate) {
+                const yesterday = shiftDateISO(state.selectedDate, -1);
+                if (state.history.some(h => h.date === yesterday)) {
+                    inspectedHistoryDate = yesterday;
+                } else if (ordersInMonth.length > 0) {
+                    inspectedHistoryDate = ordersInMonth[0].date;
+                } else {
+                    inspectedHistoryDate = yesterday;
+                }
+            }
+            renderHistoryDayInspector();
+        }
+
+        function quickInspectYesterday() {
+            const yesterday = shiftDateISO(state.selectedDate, -1);
+            inspectHistoryByDate(yesterday);
+            const el = document.getElementById('history-day-inspector');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            notify(`Đang xem lịch sử của hôm trước (${yesterday})`);
+        }
+
+        function shiftInspectorDate(days) {
+            const base = inspectedHistoryDate || shiftDateISO(state.selectedDate, -1);
+            const nextDate = shiftDateISO(base, days);
+            inspectHistoryByDate(nextDate);
+        }
+
+        function inspectHistoryByDate(dateStr) {
+            if (!dateStr) return;
+            inspectedHistoryDate = dateStr;
+            renderReportsWorkspace();
+        }
+
+        function renderHistoryDayInspector() {
+            const dateStr = inspectedHistoryDate || shiftDateISO(state.selectedDate, -1);
+            document.getElementById('inspector-date-badge').textContent = dateStr;
+            document.getElementById('inspectorDatePicker').value = dateStr;
+
+            const container = document.getElementById('inspector-content-body');
+            const record = state.history.find(h => h.date === dateStr);
+
+            if (!record || !record.lines || !record.lines.length) {
+                container.innerHTML = `
+                    <div class="py-8 text-center space-y-2">
+                        <div class="text-xs text-zinc-400">Không có lịch sử đơn hàng đã chốt vào ngày <strong class="text-zinc-700">${dateStr}</strong>.</div>
+                        <button onclick="loadInspectedDateToWorkspace()" class="px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-xs font-semibold text-zinc-700">
+                            Chuyển sang ngày ${dateStr} để tạo đơn mới
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by Supplier for this day
+            const supSummary = {};
+            let dayTotal = 0;
+            record.lines.forEach(l => {
+                if (!supSummary[l.supplierId]) {
+                    supSummary[l.supplierId] = {
+                        supplierName: l.supplierName,
+                        total: 0,
+                        lines: []
+                    };
+                }
+                supSummary[l.supplierId].total += l.totalPrice;
+                supSummary[l.supplierId].lines.push(l);
+                dayTotal += l.totalPrice;
+            });
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <!-- Supplier Totals for Inspected Day -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
+                            <span class="text-xs font-semibold text-emerald-900">Tổng tiền ngày ${dateStr}</span>
+                            <span class="text-sm font-bold text-emerald-700 tnum">${formatVND(dayTotal)}</span>
+                        </div>
+                        ${Object.values(supSummary).map(s => `
+                            <div class="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-between">
+                                <span class="text-xs font-semibold text-zinc-700 truncate mr-2">${s.supplierName}</span>
+                                <span class="text-sm font-bold text-zinc-900 tnum shrink-0">${formatVND(s.total)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Detailed Lines of Inspected Day -->
+                    <div class="overflow-x-auto border border-zinc-200 rounded-lg">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-zinc-50 border-b border-zinc-200 text-[11px] font-semibold text-zinc-500 uppercase">
+                                    <th class="py-2.5 px-4">Bếp đặt</th>
+                                    <th class="py-2.5 px-4">Mặt hàng</th>
+                                    <th class="py-2.5 px-4">Nhà cung cấp</th>
+                                    <th class="py-2.5 px-4 text-right">Số lượng</th>
+                                    <th class="py-2.5 px-4 text-right">Đơn giá</th>
+                                    <th class="py-2.5 px-4 text-right">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100 text-xs">
+                                ${record.lines.map(l => `
+                                    <tr class="hover:bg-zinc-50">
+                                        <td class="py-2.5 px-4">
+                                            <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200">
+                                                ${l.kitchenName || 'Bếp A'}
+                                            </span>
+                                        </td>
+                                        <td class="py-2.5 px-4 font-semibold text-zinc-900">${l.itemName}</td>
+                                        <td class="py-2.5 px-4 text-zinc-700">${l.supplierName}</td>
+                                        <td class="py-2.5 px-4 text-right font-semibold tnum">${l.qty} ${l.unit || 'kg'}</td>
+                                        <td class="py-2.5 px-4 text-right text-zinc-600 tnum">${formatVND(l.unitPrice)}</td>
+                                        <td class="py-2.5 px-4 text-right font-bold text-emerald-700 tnum">${formatVND(l.totalPrice)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadInspectedDateToWorkspace() {
+            const targetDate = inspectedHistoryDate || shiftDateISO(state.selectedDate, -1);
+            state.selectedDate = targetDate;
+            document.getElementById('workingDateInput').value = targetDate;
+            ensureQuotesForDate(targetDate);
+
+            // If history exists for that date, restore its kitchen quantities so user can review/edit
+            const record = state.history.find(h => h.date === targetDate);
+            if (record && record.lines) {
+                state.kitchens.forEach(k => { state.kitchenOrders[k.id] = {}; });
+                record.lines.forEach(l => {
+                    if (l.kitchenId && state.kitchenOrders[l.kitchenId]) {
+                        state.kitchenOrders[l.kitchenId][l.itemId] = (state.kitchenOrders[l.kitchenId][l.itemId] || 0) + l.qty;
+                    }
+                });
+            }
+
+            saveState();
+            switchAdminTab('orders');
+            notify(`Đã mở lại dữ liệu đơn hàng ngày ${targetDate}`);
+        }
+
+        function deleteHistoryDay(dateStr) {
+            askConfirm('Xóa lịch sử đơn hàng?', `Bạn có chắc muốn xóa các đơn hàng ngày ${dateStr} khỏi báo cáo?`, () => {
+                state.history = state.history.filter(h => h.date !== dateStr);
+                if (inspectedHistoryDate === dateStr) inspectedHistoryDate = null;
+                saveState();
+                renderReportsWorkspace();
+                notify(`Đã xóa đơn ngày ${dateStr}`);
+            });
+        }
+
+        function exportReportCSV() {
+            const monthVal = document.getElementById('reportMonthFilter').value || state.selectedDate.slice(0, 7);
+            const orders = state.history
+                .filter(h => h.date.startsWith(monthVal))
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            if (!orders.length) {
+                notify('Không có dữ liệu để xuất CSV', 'warn');
+                return;
+            }
+
+            const supHeaders = state.suppliers.map(s => `"${s.name} (VNĐ)"`).join(',');
+            let csv = `\uFEFFNgày Đặt Hàng,${supHeaders},Tổng Cộng Ngày (VNĐ)\n`;
+
+            orders.forEach(o => {
+                const perSup = {};
+                state.suppliers.forEach(s => { perSup[s.id] = 0; });
+                let total = 0;
+                o.lines.forEach(l => {
+                    perSup[l.supplierId] = (perSup[l.supplierId] || 0) + l.totalPrice;
+                    total += l.totalPrice;
+                });
+                const supCols = state.suppliers.map(s => perSup[s.id] || 0).join(',');
+                csv += `${o.date},${supCols},${total}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Bao_Cao_Chi_Phi_NCC_${monthVal}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            notify('Đã xuất file Excel (CSV) thành công');
+        }
+
+        // ==========================================
+        // CRUD MODALS (SUPPLIER, ITEM, KITCHEN)
+        // ==========================================
+        function openAdminSupplierModal(supId = null) {
+            if (supId) {
+                const s = state.suppliers.find(x => x.id === supId);
+                if (!s) return;
+                document.getElementById('adminSupModalTitle').textContent = 'Cập Nhật Nhà Cung Cấp';
+                document.getElementById('adminSupId').value = s.id;
+                document.getElementById('adminSupName').value = s.name;
+                document.getElementById('adminSupPhone').value = s.phone;
+                document.getElementById('adminSupNote').value = s.note || '';
+            } else {
+                document.getElementById('adminSupModalTitle').textContent = 'Thêm Nhà Cung Cấp Mới';
+                document.getElementById('adminSupId').value = '';
+                document.getElementById('adminSupName').value = '';
+                document.getElementById('adminSupPhone').value = '';
+                document.getElementById('adminSupNote').value = '';
+            }
+            document.getElementById('adminSupplierModal').classList.remove('hidden');
+        }
+
+        function closeAdminSupplierModal() {
+            document.getElementById('adminSupplierModal').classList.add('hidden');
+        }
+
+        function saveAdminSupplier(e) {
+            e.preventDefault();
+            const id = document.getElementById('adminSupId').value;
+            const name = document.getElementById('adminSupName').value.trim();
+            const phone = document.getElementById('adminSupPhone').value.trim();
+            const note = document.getElementById('adminSupNote').value.trim();
+            const colors = ['#059669', '#2563EB', '#D97706', '#7C3AED', '#E11D48', '#0891B2'];
+
+            if (id) {
+                const s = state.suppliers.find(x => x.id === id);
+                if (s) { s.name = name; s.phone = phone; s.note = note; }
+                notify(`Đã cập nhật ${name}`);
+            } else {
+                const newId = 'sup_' + Date.now();
+                state.suppliers.push({
+                    id: newId,
+                    name,
+                    phone,
+                    note,
+                    color: colors[state.suppliers.length % colors.length]
+                });
+                Object.keys(state.quotes).forEach(d => {
+                    state.items.forEach(it => {
+                        if (!state.quotes[d][it.id]) state.quotes[d][it.id] = {};
+                        state.quotes[d][it.id][newId] = { price: it.basePrice, inStock: true };
+                    });
+                });
+                notify(`Đã thêm nhà cung cấp ${name}`);
+            }
+
+            saveState();
+            closeAdminSupplierModal();
+            populateRoleSelectors();
+            renderActiveAdminTab();
+        }
+
+        function deleteSupplier(supId) {
+            if (state.suppliers.length <= 1) return;
+            const s = state.suppliers.find(x => x.id === supId);
+            askConfirm('Xóa nhà cung cấp?', `Bạn có chắc muốn xóa "${s ? s.name : ''}" khỏi danh sách?`, () => {
+                state.suppliers = state.suppliers.filter(x => x.id !== supId);
+                saveState();
+                populateRoleSelectors();
+                renderActiveAdminTab();
+                notify('Đã xóa nhà cung cấp');
+            });
+        }
+
+        function openAddItemModal() {
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemUnit').value = 'kg';
+            document.getElementById('newItemPrice').value = '20000';
+            document.getElementById('addItemModal').classList.remove('hidden');
+        }
+
+        function closeAddItemModal() {
+            document.getElementById('addItemModal').classList.add('hidden');
+        }
+
+        function saveNewVegetableItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('newItemName').value.trim();
+            const unit = document.getElementById('newItemUnit').value.trim() || 'kg';
+            const price = Math.max(500, parseFloat(document.getElementById('newItemPrice').value) || 20000);
+
+            const newId = 'v_' + Date.now();
+            state.items.push({ id: newId, name, unit, basePrice: price });
+
+            const dateStr = state.selectedDate;
+            ensureQuotesForDate(dateStr);
+            state.suppliers.forEach(s => {
+                state.quotes[dateStr][newId][s.id] = { price, inStock: true };
+            });
+
+            saveState();
+            closeAddItemModal();
+            if (state.session.role === 'supplier') renderSupplierPortal();
+            else renderActiveAdminTab();
+            notify(`Đã thêm mặt hàng "${name}"`);
+        }
+
+        function deleteVegetableItem(itemId) {
+            const it = state.items.find(x => x.id === itemId);
+            askConfirm('Xóa mặt hàng?', `Bạn có chắc muốn xóa "${it ? it.name : ''}" khỏi danh mục?`, () => {
+                state.items = state.items.filter(x => x.id !== itemId);
+                state.kitchens.forEach(k => {
+                    if (state.kitchenOrders[k.id]) delete state.kitchenOrders[k.id][itemId];
+                });
+                saveState();
+                renderActiveAdminTab();
+                notify('Đã xóa mặt hàng');
+            });
+        }
+
+        function openKitchenModal(kitchenId = null) {
+            const delBtn = document.getElementById('btnDeleteKitchen');
+            if (kitchenId) {
+                const k = state.kitchens.find(x => x.id === kitchenId);
+                if (!k) return;
+                document.getElementById('kitchenModalTitle').textContent = `Cập Nhật ${k.name}`;
+                document.getElementById('editKitchenId').value = k.id;
+                document.getElementById('kitchenNameInput').value = k.name;
+                document.getElementById('kitchenNoteInput').value = k.note || '';
+                delBtn.classList.toggle('hidden', state.kitchens.length <= 1);
+            } else {
+                const nextChar = String.fromCharCode(65 + state.kitchens.length);
+                document.getElementById('kitchenModalTitle').textContent = 'Thêm Bếp Mới';
+                document.getElementById('editKitchenId').value = '';
+                document.getElementById('kitchenNameInput').value = `Bếp ${nextChar}`;
+                document.getElementById('kitchenNoteInput').value = '';
+                delBtn.classList.add('hidden');
+            }
+            document.getElementById('kitchenModal').classList.remove('hidden');
+        }
+
+        function closeKitchenModal() {
+            document.getElementById('kitchenModal').classList.add('hidden');
+        }
+
+        function saveKitchenForm(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editKitchenId').value;
+            const name = document.getElementById('kitchenNameInput').value.trim();
+            const note = document.getElementById('kitchenNoteInput').value.trim();
+            const colors = ['#059669', '#2563EB', '#D97706', '#7C3AED', '#E11D48', '#0891B2'];
+
+            if (editId) {
+                const k = state.kitchens.find(x => x.id === editId);
+                if (k) { k.name = name; k.note = note; }
+                notify(`Đã cập nhật ${name}`);
+            } else {
+                const newId = 'k_' + Date.now();
+                state.kitchens.push({
+                    id: newId,
+                    name,
+                    note,
+                    color: colors[state.kitchens.length % colors.length]
+                });
+                state.kitchenOrders[newId] = {};
+                state.activeKitchenId = newId;
+                notify(`Đã thêm ${name}`);
+            }
+            saveState();
+            closeKitchenModal();
+            renderOrdersWorkspace();
+        }
+
+        function deleteActiveKitchen() {
+            const editId = document.getElementById('editKitchenId').value;
+            if (!editId || state.kitchens.length <= 1) return;
+            const k = state.kitchens.find(x => x.id === editId);
+            closeKitchenModal();
+            askConfirm('Xóa bếp?', `Xóa "${k ? k.name : ''}" và toàn bộ số lượng mặt hàng đang nhập của bếp này?`, () => {
+                state.kitchens = state.kitchens.filter(x => x.id !== editId);
+                delete state.kitchenOrders[editId];
+                state.activeKitchenId = state.kitchens[0].id;
+                saveState();
+                renderOrdersWorkspace();
+                notify('Đã xóa bếp');
+            });
+        }
+
+        // Initialize App on Load
+        window.onload = function () {
+            loadState();
+            document.getElementById('workingDateInput').value = state.selectedDate;
+            applyWorkspaceByRole();
+        };
+    </script>
+</body>
+</html>
