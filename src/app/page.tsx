@@ -25,10 +25,11 @@ import {
   commitOrderBatchAction,
   deleteHistoryDayAction,
 } from "@/actions/app-actions";
-import { Header } from "@/components/layout/Header";
+import { Header, AdminTab } from "@/components/layout/Header";
 import { SupplierPortal } from "@/components/supplier/SupplierPortal";
 import { TabQuotes } from "@/components/admin/TabQuotes";
 import { TabOrders } from "@/components/admin/TabOrders";
+import { TabPO } from "@/components/admin/TabPO";
 import { TabReports } from "@/components/admin/TabReports";
 import { RoleSwitchModal } from "@/components/modals/RoleSwitchModal";
 import { SupplierModal } from "@/components/modals/SupplierModal";
@@ -65,7 +66,7 @@ export default function FreshOptimaApp() {
     role: "admin",
     supplierId: null,
   });
-  const [activeAdminTab, setActiveAdminTab] = useState<"quotes" | "orders" | "reports">("quotes");
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>("quotes");
 
   // Data from DB
   const [suppliers, setSuppliers] = useState<SupplierData[]>([]);
@@ -587,6 +588,10 @@ export default function FreshOptimaApp() {
                 onDeleteSupplier={handleDeleteSupplier}
                 onOpenAddItemModal={() => setItemModalOpen(true)}
                 onDeleteItem={handleDeleteItem}
+                onProceedToOrders={() => {
+                  setActiveAdminTab("orders");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
               />
             )}
 
@@ -609,6 +614,34 @@ export default function FreshOptimaApp() {
                 }}
                 onCommitOrders={handleCommitOrders}
                 onNotify={notify}
+                onProceedToPo={() => {
+                  setActiveAdminTab("po");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                onBackToQuotes={() => {
+                  setActiveAdminTab("quotes");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+            )}
+
+            {activeAdminTab === "po" && (
+              <TabPO
+                workingDate={workingDate}
+                kitchens={kitchens}
+                items={items}
+                suppliers={suppliers}
+                dayQuotes={dayQuotes}
+                kitchenOrders={kitchenOrders}
+                onNotify={notify}
+                onBackToOrders={() => {
+                  setActiveAdminTab("orders");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                onProceedToReports={() => {
+                  setActiveAdminTab("reports");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
               />
             )}
 
@@ -617,7 +650,11 @@ export default function FreshOptimaApp() {
                 workingDate={workingDate}
                 suppliers={suppliers}
                 history={history}
-                onReloadDateToOrders={handleReloadDateToOrders}
+                onReloadDateToOrders={(batch) => {
+                  handleReloadDateToOrders(batch);
+                  setActiveAdminTab("orders");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 onDeleteHistoryDay={handleDeleteHistoryDay}
                 onNotify={notify}
               />

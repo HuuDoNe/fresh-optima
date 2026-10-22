@@ -10,10 +10,18 @@
   --foreground: #09090B;
 }
 
+html {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 body {
   background-color: #FAFAFA;
   color: #09090B;
   letter-spacing: -0.011em;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tnum {
