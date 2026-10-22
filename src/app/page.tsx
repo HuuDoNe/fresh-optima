@@ -26,6 +26,7 @@ import {
   deleteHistoryDayAction,
 } from "@/actions/app-actions";
 import { Header, AdminTab } from "@/components/layout/Header";
+import { IosTabBar } from "@/components/layout/IosTabBar";
 import { SupplierPortal } from "@/components/supplier/SupplierPortal";
 import { TabQuotes } from "@/components/admin/TabQuotes";
 import { TabOrders } from "@/components/admin/TabOrders";
@@ -662,6 +663,27 @@ export default function FreshOptimaApp() {
           </div>
         )}
       </main>
+
+      {/* iOS Cupertino Bottom Tab Bar */}
+      {session.role === "admin" && (
+        <IosTabBar
+          activeTab={activeAdminTab}
+          onTabChange={(tab) => {
+            setActiveAdminTab(tab);
+            if (typeof window !== "undefined") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+          orderCount={
+            Object.values(kitchenOrders).reduce(
+              (acc, ko) =>
+                acc +
+                Object.values(ko).filter((v) => parseFloat(String(v)) > 0).length,
+              0
+            )
+          }
+        />
+      )}
 
       {/* Global Modals */}
       <RoleSwitchModal

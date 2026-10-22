@@ -24,8 +24,9 @@ export function RoleSwitchModal({
   const isAdmin = session.role === "admin";
 
   return (
-    <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 border border-zinc-200 shadow-xl animate-view">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full p-6 border border-black/5 shadow-2xl animate-view">
+        <div className="w-10 h-1 rounded-full bg-zinc-300 mx-auto mb-3 sm:hidden" />
         <div className="flex items-center justify-between pb-3 border-b border-zinc-100 mb-4">
           <div>
             <h3 className="text-sm font-bold text-zinc-950">Chuyển Đổi Vai Trò Sử Dụng (RBAC)</h3>

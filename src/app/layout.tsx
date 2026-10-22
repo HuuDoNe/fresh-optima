@@ -13,11 +13,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#059669",
+  themeColor: "#F2F2F7",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -45,7 +46,7 @@ export default function RootLayout({
       lang="vi"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#FAFAFA] text-zinc-900 selection:bg-emerald-600 selection:text-white">
+      <body className="min-h-full flex flex-col bg-[#F2F2F7] text-[#1C1C1E] selection:bg-[#34C759] selection:text-white pb-[max(env(safe-area-inset-bottom),76px)]">
         {children}
       </body>
     </html>

@@ -111,43 +111,42 @@ export function TabReports({
   }
 
   return (
-    <section className="animate-view space-y-6">
+    <section className="animate-view space-y-4 pb-28 max-w-full overflow-x-hidden">
       {/* Top Control Bar: Filter by Month & Quick View Yesterday */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="ios-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-zinc-950">
-            Báo Cáo Chi Phí Theo Ngày & Tổng Tiền Từng Nhà Cung Cấp
+          <h2 className="text-base font-extrabold text-[#1C1C1E] tracking-tight">
+            Báo Cáo Chi Phí & Lịch Sử
           </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Theo dõi số tiền thanh toán cho từng nhà cung cấp mỗi ngày và tra cứu
-            lại lịch sử đơn hôm trước
+          <p className="text-xs text-[#8E8E93] mt-0.5">
+            Theo dõi chi phí thanh toán cho từng NCC và tra cứu lịch sử đơn
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={handleQuickYesterday}
-            className="px-3.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-full bg-[#34C759]/15 hover:bg-[#34C759]/20 text-[#248A3D] text-xs font-bold transition active:scale-95 flex items-center gap-1.5"
           >
             <History className="w-3.5 h-3.5" />
             <span>Xem lịch sử hôm trước</span>
           </button>
 
-          <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5">
-            <span className="text-xs text-zinc-500">Tháng:</span>
+          <div className="flex items-center gap-1.5 bg-[#F2F2F7] border border-black/5 rounded-full px-3 py-1.5">
+            <span className="text-xs text-[#8E8E93]">Tháng:</span>
             <input
               type="month"
               value={monthFilter}
               onChange={(e) => setMonthFilter(e.target.value)}
-              className="text-xs font-semibold text-zinc-900 bg-transparent focus:outline-none tnum cursor-pointer"
+              className="text-xs font-bold text-[#1C1C1E] bg-transparent focus:outline-none tnum cursor-pointer"
             />
           </div>
 
           <button
             type="button"
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-full bg-[#1C1C1E] hover:bg-black text-white text-xs font-bold transition active:scale-95 flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Xuất Excel (CSV)</span>

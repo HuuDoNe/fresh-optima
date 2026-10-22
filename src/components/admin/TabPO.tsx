@@ -158,29 +158,24 @@ export function TabPO({
   const allocatedSuppliersCount = Object.keys(supGroups).length;
 
   return (
-    <section className="animate-view space-y-5 pb-24 sm:pb-28">
-      {/* Step Header */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-4 sm:p-5 shadow-2xs space-y-3">
+    <section className="animate-view space-y-4 pb-28 max-w-full overflow-x-hidden">
+      {/* iOS Header & Cupertino Widget Grid */}
+      <div className="ios-card p-4 sm:p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center">
-                ✓
-              </span>
-              <h2 className="text-sm sm:text-base font-bold text-zinc-950">
-                Bước 3: Phiếu Đặt Hàng & Gửi Zalo
-              </h2>
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              Đơn hàng đã được tối ưu giá rẻ nhất, đóng gói và tách riêng từng bếp cho nhà cung cấp giao đúng nơi.
+            <h2 className="text-base font-extrabold text-[#1C1C1E] tracking-tight">
+              Phiếu Đặt Hàng & Gửi Zalo
+            </h2>
+            <p className="text-xs text-[#8E8E93] mt-0.5">
+              Tối ưu giá rẻ nhất, đóng gói và tách riêng từng bếp cho nhà cung cấp
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 self-start sm:self-auto">
             <button
               type="button"
               onClick={onBackToOrders}
-              className="px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-xs font-semibold text-[#1C1C1E] transition active:scale-95 flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Sửa số lượng</span>
@@ -188,7 +183,7 @@ export function TabPO({
             <button
               type="button"
               onClick={onProceedToReports}
-              className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs font-semibold text-white transition flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-full bg-[#1C1C1E] text-xs font-bold text-white transition active:scale-95 flex items-center gap-1"
             >
               <BarChart3 className="w-3.5 h-3.5" />
               <span>Xem Báo Cáo</span>
@@ -196,76 +191,64 @@ export function TabPO({
           </div>
         </div>
 
-        {/* 4 Metric Summary Cards */}
+        {/* 4 Apple Widgets */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
-          <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-200/80">
-            <div className="flex items-center gap-1.5 text-zinc-500 text-[11px] font-medium">
-              <Package className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="bg-[#F2F2F7] rounded-2xl p-3 border border-black/5">
+            <div className="flex items-center gap-1.5 text-[#8E8E93] text-[11px] font-semibold">
+              <Package className="w-3.5 h-3.5 text-[#34C759]" />
               <span>Tổng Tiền Đơn</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-zinc-950 mt-1 tnum">
+            <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
               {formatVND(allocation.totalCost)}
             </div>
-            <div className="text-[10px] text-zinc-400 mt-0.5">
-              Cho ngày: {workingDate}
-            </div>
           </div>
 
-          <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-200/80">
-            <div className="flex items-center gap-1.5 text-zinc-500 text-[11px] font-medium">
-              <TrendingDown className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="bg-[#F2F2F7] rounded-2xl p-3 border border-black/5">
+            <div className="flex items-center gap-1.5 text-[#8E8E93] text-[11px] font-semibold">
+              <TrendingDown className="w-3.5 h-3.5 text-[#34C759]" />
               <span>Tiết Kiệm Được</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-emerald-600 mt-1 tnum">
+            <div className="text-base sm:text-lg font-extrabold text-[#34C759] mt-1 tnum">
               {formatVND(allocation.totalSaved)}
             </div>
-            <div className="text-[10px] text-zinc-400 mt-0.5">
-              So với giá sàn thị trường
-            </div>
           </div>
 
-          <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-200/80">
-            <div className="flex items-center gap-1.5 text-zinc-500 text-[11px] font-medium">
-              <Layers className="w-3.5 h-3.5 text-zinc-600" />
+          <div className="bg-[#F2F2F7] rounded-2xl p-3 border border-black/5">
+            <div className="flex items-center gap-1.5 text-[#8E8E93] text-[11px] font-semibold">
+              <Layers className="w-3.5 h-3.5 text-[#007AFF]" />
               <span>Tổng Khối Lượng</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-zinc-950 mt-1 tnum">
+            <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
               {allocation.allocatedKg} kg
-            </div>
-            <div className="text-[10px] text-zinc-400 mt-0.5">
-              {allocation.itemCount} dòng mặt hàng
             </div>
           </div>
 
-          <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-200/80">
-            <div className="flex items-center gap-1.5 text-zinc-500 text-[11px] font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+          <div className="bg-[#F2F2F7] rounded-2xl p-3 border border-black/5">
+            <div className="flex items-center gap-1.5 text-[#8E8E93] text-[11px] font-semibold">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#5856D6]" />
               <span>NCC Nhận Đơn</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-zinc-950 mt-1 tnum">
-              {allocatedSuppliersCount} Nhà cung cấp
-            </div>
-            <div className="text-[10px] text-zinc-400 mt-0.5">
-              Tối ưu phân chia tự động
+            <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
+              {allocatedSuppliersCount} NCC
             </div>
           </div>
         </div>
       </div>
 
-      {/* Supplier PO Cards List (Split by Kitchen inside) */}
-      <div className="space-y-4">
+      {/* Supplier PO Cards (iOS Inset Grouped) */}
+      <div className="space-y-3.5">
         {!allocatedSuppliersCount ? (
-          <div className="bg-white rounded-xl border border-zinc-200 p-10 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto text-xl">
+          <div className="ios-card p-10 text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-[#F2F2F7] text-[#8E8E93] flex items-center justify-center mx-auto text-xl">
               📦
             </div>
-            <p className="text-xs text-zinc-500">
-              Chưa có đơn hàng nào được nhập số lượng.
+            <p className="text-xs text-[#8E8E93]">
+              Chưa có mặt hàng nào được nhập số lượng.
             </p>
             <button
               type="button"
               onClick={onBackToOrders}
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition"
+              className="px-4 py-2 rounded-2xl bg-[#34C759] text-white text-xs font-bold active:scale-95 transition"
             >
               Quay lại Bước 2 để nhập số lượng
             </button>
@@ -274,63 +257,66 @@ export function TabPO({
           Object.values(supGroups).map((g) => {
             const kBlocks = Object.values(g.kitchenBlocks);
             const isAllCopied = copiedSupplierId === `${g.supplierId}-all`;
+            const zaloPreview = generateZaloOrderText(
+              allocation,
+              g.supplierId,
+              workingDate,
+              null
+            );
 
             return (
-              <div
-                key={g.supplierId}
-                className="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden"
-              >
-                {/* Supplier Header & Primary Zalo Copy Button */}
-                <div className="p-4 sm:p-5 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-gradient-to-r from-zinc-50/50 to-white">
+              <div key={g.supplierId} className="ios-card overflow-hidden">
+                {/* Header & Primary Zalo Copy Button */}
+                <div className="p-4 sm:p-5 border-b border-[#3C3C43]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-b from-[#F2F2F7]/50 to-white">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span
                         className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: g.supplierColor }}
                       />
-                      <h3 className="font-bold text-zinc-950 text-sm sm:text-base">
+                      <h3 className="font-extrabold text-[#1C1C1E] text-base">
                         {g.supplierName}
                       </h3>
                       {g.supplierPhone && (
                         <a
                           href={`tel:${g.supplierPhone}`}
-                          className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-emerald-700 bg-zinc-100 px-2 py-0.5 rounded font-mono"
+                          className="inline-flex items-center gap-1 text-[11px] text-[#007AFF] bg-white px-2 py-0.5 rounded-full font-mono border border-black/5"
                         >
                           <Phone className="w-2.5 h-2.5" />
                           <span>{g.supplierPhone}</span>
                         </a>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                    <div className="flex items-center gap-2 text-xs text-[#8E8E93]">
                       <span>
-                        Tổng đơn: <strong className="text-zinc-900 tnum">{g.totalKg} kg</strong>
+                        Tổng: <strong className="text-[#1C1C1E] tnum">{g.totalKg} kg</strong>
                       </span>
                       <span>•</span>
                       <span>
                         Thành tiền:{" "}
-                        <strong className="text-emerald-700 font-bold tnum">
+                        <strong className="text-[#34C759] font-bold tnum">
                           {formatVND(g.totalCost)}
                         </strong>
                       </span>
                       <span>•</span>
-                      <span>{kBlocks.length} bếp nhận hàng</span>
+                      <span>{kBlocks.length} bếp nhận</span>
                     </div>
                   </div>
 
-                  {/* Big Touch-Friendly Copy Zalo Button */}
+                  {/* iOS Style Copy Zalo Button */}
                   <button
                     type="button"
                     onClick={() => handleCopyZalo(g.supplierId)}
-                    className={`w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0 ${
+                    className={`w-full sm:w-auto px-4 py-2.5 rounded-2xl font-bold text-xs transition-all duration-150 flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(52,199,89,0.3)] active:scale-95 shrink-0 ${
                       isAllCopied
-                        ? "bg-emerald-700 text-white"
-                        : "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-98"
+                        ? "bg-[#248A3D] text-white"
+                        : "bg-[#34C759] hover:bg-[#28CD41] text-white"
                     }`}
                   >
                     {isAllCopied ? (
                       <>
                         <Check className="w-4 h-4" />
-                        <span>Đã chép tin Zalo!</span>
+                        <span>Đã sao chép tin nhắn Zalo!</span>
                       </>
                     ) : (
                       <>
@@ -341,90 +327,46 @@ export function TabPO({
                   </button>
                 </div>
 
-                {/* Per-Kitchen Sections */}
-                <div className="p-4 sm:p-5 space-y-3.5 bg-zinc-50/40">
-                  <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-                    Đóng gói & Giao riêng theo từng bếp (Không gộp chung):
+                {/* Zalo Message Preview Box (Transparent, Authentic) */}
+                <div className="p-4 space-y-3 bg-[#F2F2F7]/50">
+                  <div className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider">
+                    Nội dung sẽ sao chép gửi NCC (Không kèm giá tiền):
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    {kBlocks.map((kb) => {
-                      const isKitchenCopied =
-                        copiedSupplierId === `${g.supplierId}-${kb.kitchenId}`;
-
-                      return (
-                        <div
-                          key={kb.kitchenId}
-                          className="bg-white rounded-xl border border-zinc-200 p-3.5 space-y-2.5 shadow-2xs"
-                        >
-                          <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: kb.kitchenColor }}
-                              />
-                              <span className="font-bold text-xs text-zinc-900">
-                                {kb.kitchenName}
-                              </span>
-                              {kb.kitchenNote && (
-                                <span className="text-[10px] text-zinc-400 truncate max-w-[140px]">
-                                  ({kb.kitchenNote})
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyZalo(g.supplierId, kb.kitchenId)}
-                              className="px-2 py-1 rounded text-[10px] font-semibold text-zinc-600 hover:text-emerald-700 bg-zinc-50 border border-zinc-200 hover:border-emerald-300 transition flex items-center gap-1"
-                              title="Chỉ sao chép đơn của bếp này"
-                            >
-                              {isKitchenCopied ? (
-                                <>
-                                  <Check className="w-3 h-3 text-emerald-600" />
-                                  <span className="text-emerald-700">Đã chép</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3 text-zinc-400" />
-                                  <span>Chép riêng</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-
-                          <div className="space-y-1.5 text-xs">
-                            {kb.items.map((it, iIdx) => (
-                              <div
-                                key={iIdx}
-                                className="flex items-center justify-between py-1 border-b border-zinc-50 last:border-0"
-                              >
-                                <div>
-                                  <span className="font-medium text-zinc-900">
-                                    {it.itemName}
-                                  </span>
-                                  <span className="text-zinc-400 text-[11px] ml-1.5">
-                                    ({it.qty} {it.unit} × {formatVND(it.unitPrice)})
-                                  </span>
-                                </div>
-                                <div className="font-bold text-zinc-900 tnum">
-                                  {formatVND(it.totalPrice)}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs font-semibold">
-                            <span className="text-zinc-500">
-                              Cộng {kb.kitchenName} ({kb.subKg} kg):
-                            </span>
-                            <span className="text-emerald-700 font-bold tnum">
-                              {formatVND(kb.subCost)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="bg-white rounded-2xl p-3.5 text-xs font-mono text-[#1C1C1E] whitespace-pre-wrap border border-black/5 shadow-2xs leading-relaxed">
+                    {zaloPreview}
                   </div>
+
+                  {/* Individual Kitchen Copy Buttons */}
+                  {kBlocks.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className="text-[11px] text-[#8E8E93]">Hoặc sao chép riêng từng bếp:</span>
+                      {kBlocks.map((kb) => {
+                        const isKitchenCopied =
+                          copiedSupplierId === `${g.supplierId}-${kb.kitchenId}`;
+                        return (
+                          <button
+                            key={kb.kitchenId}
+                            type="button"
+                            onClick={() => handleCopyZalo(g.supplierId, kb.kitchenId)}
+                            className="px-2.5 py-1 rounded-full bg-white border border-black/10 text-xs font-semibold text-[#1C1C1E] hover:border-[#34C759] transition active:scale-95 flex items-center gap-1 shadow-2xs"
+                          >
+                            {isKitchenCopied ? (
+                              <>
+                                <Check className="w-3 h-3 text-[#34C759]" />
+                                <span className="text-[#34C759]">Đã chép {kb.kitchenName}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-[#8E8E93]" />
+                                <span>Chép riêng {kb.kitchenName}</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -432,14 +374,14 @@ export function TabPO({
         )}
       </div>
 
-      {/* Optional Detailed Line-by-Line Table Toggle */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-2xs space-y-3">
+      {/* Optional Table Detail Toggle */}
+      <div className="ios-card p-4 space-y-3">
         <button
           type="button"
           onClick={() => setShowTableDetail(!showTableDetail)}
-          className="w-full flex items-center justify-between text-xs font-bold text-zinc-800 hover:text-zinc-950 transition"
+          className="w-full flex items-center justify-between text-xs font-bold text-[#1C1C1E] transition"
         >
-          <span>Xem bảng phân bổ chi tiết từng dòng mặt hàng ({allocation.lines.length} dòng)</span>
+          <span>Xem bảng phân bổ chi tiết ({allocation.lines.length} dòng)</span>
           {showTableDetail ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
@@ -447,28 +389,26 @@ export function TabPO({
           <div className="overflow-x-auto pt-2">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 text-[11px] font-semibold text-zinc-500">
+                <tr className="border-b border-[#3C3C43]/10 bg-[#F2F2F7] text-[11px] font-bold text-[#8E8E93]">
                   <th className="py-2.5 px-3">Bếp</th>
                   <th className="py-2.5 px-3">Mặt hàng</th>
                   <th className="py-2.5 px-3 text-right">SL</th>
                   <th className="py-2.5 px-3">NCC chọn</th>
                   <th className="py-2.5 px-3 text-right">Đơn giá</th>
                   <th className="py-2.5 px-3 text-right">Thành tiền</th>
-                  <th className="py-2.5 px-3">Lý do</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-[#3C3C43]/10">
                 {allocation.lines.map((l, idx) => (
-                  <tr key={idx} className="hover:bg-zinc-50">
-                    <td className="py-2 px-3 font-semibold" style={{ color: l.kitchenColor }}>
+                  <tr key={idx} className="hover:bg-black/[0.015]">
+                    <td className="py-2 px-3 font-bold" style={{ color: l.kitchenColor }}>
                       {l.kitchenName}
                     </td>
-                    <td className="py-2 px-3 font-medium text-zinc-900">{l.itemName}</td>
+                    <td className="py-2 px-3 font-medium text-[#1C1C1E]">{l.itemName}</td>
                     <td className="py-2 px-3 text-right font-bold tnum">{l.qty} {l.unit}</td>
-                    <td className="py-2 px-3 text-zinc-800">{l.supplierName}</td>
-                    <td className="py-2 px-3 text-right text-zinc-600 tnum">{formatVND(l.unitPrice)}</td>
-                    <td className="py-2 px-3 text-right font-bold text-emerald-700 tnum">{formatVND(l.totalPrice)}</td>
-                    <td className="py-2 px-3 text-[11px] text-zinc-500">{l.note}</td>
+                    <td className="py-2 px-3 text-[#1C1C1E]">{l.supplierName}</td>
+                    <td className="py-2 px-3 text-right text-[#8E8E93] tnum">{formatVND(l.unitPrice)}</td>
+                    <td className="py-2 px-3 text-right font-bold text-[#34C759] tnum">{formatVND(l.totalPrice)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -477,39 +417,25 @@ export function TabPO({
         )}
       </div>
 
-      {/* Sticky Bottom Bar for Step 3 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-200 p-3 sm:p-4 shadow-lg">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-3">
-          <div className="text-xs">
-            <span className="text-zinc-500 hidden sm:inline">Tổng chi phí đặt hàng: </span>
-            <span className="font-bold text-base text-zinc-950 tnum">
-              {formatVND(allocation.totalCost)}
-            </span>
-            <span className="text-[11px] text-emerald-600 font-semibold ml-2 hidden sm:inline">
-              (Tiết kiệm {formatVND(allocation.totalSaved)})
-            </span>
-          </div>
+      {/* Floating Action Button (Step 3 -> Reports) */}
+      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onBackToOrders}
+          className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-white border border-[#3C3C43]/15 hover:bg-[#F2F2F7] text-[#1C1C1E] text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-98"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Sửa số lượng</span>
+        </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onBackToOrders}
-              className="px-3.5 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Sửa số lượng</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onProceedToReports}
-              className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-            >
-              <span>Xem Báo Cáo Chi Phí (Bước 4)</span>
-              <BarChart3 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={onProceedToReports}
+          className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl font-bold text-sm sm:text-base bg-[#1C1C1E] text-white hover:bg-black transition flex items-center justify-center gap-2 shadow-sm active:scale-98"
+        >
+          <span>Xem Báo Cáo Chi Phí (Bước 4)</span>
+          <BarChart3 className="w-4 h-4" />
+        </button>
       </div>
     </section>
   );
