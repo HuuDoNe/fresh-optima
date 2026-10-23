@@ -20,6 +20,7 @@ interface TabQuotesProps {
   suppliers: SupplierData[];
   items: VegetableItemData[];
   dayQuotes: DateQuotesMap;
+  readOnly?: boolean;
   onUpdateQuote: (
     itemId: string,
     supplierId: string,
@@ -41,6 +42,7 @@ export function TabQuotes({
   suppliers,
   items,
   dayQuotes,
+  readOnly = false,
   onUpdateQuote,
   onCopyAllYesterday,
   onRandomizeMarket,
@@ -73,30 +75,34 @@ export function TabQuotes({
               Báo Giá Nhà Cung Cấp
             </h2>
             <p className="text-xs text-[#8E8E93] mt-0.5">
-              Chọn NCC để xem và điều chỉnh báo giá sản phẩm
+              {readOnly
+                ? "Xem bảng giá và trạng thái sản phẩm từng nhà cung cấp (Chỉ xem)"
+                : "Chọn NCC để xem và điều chỉnh báo giá sản phẩm"}
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={onCopyAllYesterday}
-              className="px-2.5 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1"
-              title="Sao chép toàn bộ giá từ ngày hôm trước"
-            >
-              <Copy className="w-3.5 h-3.5 text-[#8E8E93]" />
-              <span className="hidden sm:inline">Sao chép hôm qua</span>
-            </button>
+          {!readOnly && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={onCopyAllYesterday}
+                className="px-2.5 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1"
+                title="Sao chép toàn bộ giá từ ngày hôm trước"
+              >
+                <Copy className="w-3.5 h-3.5 text-[#8E8E93]" />
+                <span className="hidden sm:inline">Sao chép hôm qua</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => onOpenSupplierModal(null)}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-[#34C759] hover:bg-[#28CD41] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Thêm NCC</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => onOpenSupplierModal(null)}
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-[#34C759] hover:bg-[#28CD41] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Thêm NCC</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Cupertino Segmented Tabs for Suppliers */}
@@ -159,25 +165,27 @@ export function TabQuotes({
                 )}
               </div>
 
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onEnterSupplierPortal(activeSupplier.id)}
-                  className="px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D] text-[11px] font-bold transition active:scale-95 flex items-center gap-1"
-                  title="Cổng NCC"
-                >
-                  <LogIn className="w-3 h-3" />
-                  <span>Cổng NCC</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteSupplier(activeSupplier)}
-                  className="p-1 rounded-full text-[#8E8E93] hover:text-[#FF3B30] transition"
-                  title="Xóa NCC"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {!readOnly && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onEnterSupplierPortal(activeSupplier.id)}
+                    className="px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D] text-[11px] font-bold transition active:scale-95 flex items-center gap-1"
+                    title="Cổng NCC"
+                  >
+                    <LogIn className="w-3 h-3" />
+                    <span>Cổng NCC</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteSupplier(activeSupplier)}
+                    className="p-1 rounded-full text-[#8E8E93] hover:text-[#FF3B30] transition"
+                    title="Xóa NCC"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* iOS Search Input */}
@@ -193,14 +201,16 @@ export function TabQuotes({
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={onOpenAddItemModal}
-                className="px-3 py-1.5 rounded-full bg-[#1C1C1E] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Thêm Món</span>
-              </button>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={onOpenAddItemModal}
+                  className="px-3 py-1.5 rounded-full bg-[#1C1C1E] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm Món</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -235,14 +245,16 @@ export function TabQuotes({
                         </span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onDeleteItem(item)}
-                        className="p-1 rounded text-[#8E8E93] hover:text-[#FF3B30] sm:hidden transition"
-                        title="Xóa món"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteItem(item)}
+                          className="p-1 rounded text-[#8E8E93] hover:text-[#FF3B30] sm:hidden transition"
+                          title="Xóa món"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
 
                     {/* Right: iOS Switch (Còn/Hết) & Price Input */}
@@ -250,45 +262,61 @@ export function TabQuotes({
                       {/* Authentic Cupertino Green Toggle Slider */}
                       <IosSwitch
                         checked={inStock}
-                        onChange={(val) =>
-                          onUpdateQuote(
-                            item.id,
-                            activeSupplier.id,
-                            undefined,
-                            val
-                          )
-                        }
-                      />
-
-                      {/* Price Pill */}
-                      <div className="flex items-center bg-[#F2F2F7] rounded-xl px-2.5 py-1 border border-black/5 focus-within:border-[#34C759] focus-within:bg-white shadow-2xs">
-                        <input
-                          type="number"
-                          step="500"
-                          value={q.price}
-                          onChange={(e) =>
+                        disabled={readOnly}
+                        onChange={(val) => {
+                          if (!readOnly) {
                             onUpdateQuote(
                               item.id,
                               activeSupplier.id,
-                              parseFloat(e.target.value) || 0,
-                              undefined
-                            )
+                              undefined,
+                              val
+                            );
                           }
-                          className="w-20 sm:w-24 text-right text-xs font-bold text-[#1C1C1E] focus:outline-none tnum"
-                        />
-                        <span className="text-xs text-[#8E8E93] font-semibold ml-1">
-                          đ/{item.unit}
-                        </span>
-                      </div>
+                        }}
+                      />
 
-                      <button
-                        type="button"
-                        onClick={() => onDeleteItem(item)}
-                        className="p-1 rounded text-[#8E8E93] hover:text-[#FF3B30] hidden sm:block transition"
-                        title="Xóa món này"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Price Pill */}
+                      {readOnly ? (
+                        <div className="flex items-center bg-[#F2F2F7] rounded-xl px-2.5 py-1 border border-black/5 shadow-2xs">
+                          <span className="w-20 sm:w-24 text-right text-xs font-bold text-[#1C1C1E] tnum">
+                            {q.price.toLocaleString("vi-VN")}
+                          </span>
+                          <span className="text-xs text-[#8E8E93] font-semibold ml-1">
+                            đ/{item.unit}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center bg-[#F2F2F7] rounded-xl px-2.5 py-1 border border-black/5 focus-within:border-[#34C759] focus-within:bg-white shadow-2xs">
+                          <input
+                            type="number"
+                            step="500"
+                            value={q.price}
+                            onChange={(e) =>
+                              onUpdateQuote(
+                                item.id,
+                                activeSupplier.id,
+                                parseFloat(e.target.value) || 0,
+                                undefined
+                              )
+                            }
+                            className="w-20 sm:w-24 text-right text-xs font-bold text-[#1C1C1E] focus:outline-none tnum"
+                          />
+                          <span className="text-xs text-[#8E8E93] font-semibold ml-1">
+                            đ/{item.unit}
+                          </span>
+                        </div>
+                      )}
+
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteItem(item)}
+                          className="p-1 rounded text-[#8E8E93] hover:text-[#FF3B30] hidden sm:block transition"
+                          title="Xóa món này"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

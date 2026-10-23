@@ -8,14 +8,16 @@ interface IosTabBarProps {
   activeTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   orderCount?: number;
+  isKitchen?: boolean;
 }
 
 export function IosTabBar({
   activeTab,
   onTabChange,
   orderCount = 0,
+  isKitchen = false,
 }: IosTabBarProps) {
-  const tabs = [
+  const allTabs = [
     {
       id: "quotes" as AdminTab,
       label: "Báo Giá",
@@ -39,9 +41,15 @@ export function IosTabBar({
     },
   ];
 
+  const tabs = isKitchen ? allTabs.filter((t) => t.id !== "reports") : allTabs;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#F9F9F9]/90 backdrop-blur-2xl border-t border-[#3C3C43]/15 pb-[max(env(safe-area-inset-bottom),10px)] pt-1.5 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-      <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
+      <div
+        className={`max-w-md mx-auto grid ${
+          isKitchen ? "grid-cols-3" : "grid-cols-4"
+        } gap-1`}
+      >
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

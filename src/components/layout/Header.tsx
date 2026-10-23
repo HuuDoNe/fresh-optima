@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { SupplierData, SessionState } from "@/lib/types";
-import { Calendar, UserCheck, Shield } from "lucide-react";
+import { SupplierData, KitchenData, SessionState, UserRole } from "@/lib/types";
+import { Calendar, UserCheck, Shield, UtensilsCrossed } from "lucide-react";
 import { PwaInstallButton } from "@/components/common/PwaInstallButton";
 
 export type AdminTab = "quotes" | "orders" | "po" | "reports";
@@ -10,17 +10,19 @@ export type AdminTab = "quotes" | "orders" | "po" | "reports";
 interface HeaderProps {
   session: SessionState;
   suppliers: SupplierData[];
+  kitchens?: KitchenData[];
   workingDate: string;
   activeAdminTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   onDateChange: (newDate: string) => void;
   onOpenRoleModal: () => void;
-  onQuickRoleChange: (role: "admin" | "supplier", supplierId?: string | null) => void;
+  onQuickRoleChange: (role: UserRole, id?: string | null) => void;
 }
 
 export function Header({
   session,
   suppliers,
+  kitchens = [],
   workingDate,
   activeAdminTab,
   onTabChange,
@@ -29,7 +31,9 @@ export function Header({
   onQuickRoleChange,
 }: HeaderProps) {
   const isSupplier = session.role === "supplier";
+  const isKitchen = session.role === "kitchen";
   const activeSupplier = suppliers.find((s) => s.id === session.supplierId);
+  const activeKitchen = kitchens.find((k) => k.id === session.kitchenId);
 
   return (
     <header className="sticky top-0 z-30 bg-[#F2F2F7]/85 backdrop-blur-2xl border-b border-[#3C3C43]/10 pt-[env(safe-area-inset-top,0px)]">
@@ -49,6 +53,11 @@ export function Header({
                   <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] shrink-0" />
                   {activeSupplier ? activeSupplier.name : "NCC"}
                 </span>
+              ) : isKitchen ? (
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#007AFF]/15 text-[#007AFF] truncate">
+                  <UtensilsCrossed className="w-3 h-3 text-[#007AFF] shrink-0" />
+                  {activeKitchen ? activeKitchen.name : "Bếp Ăn"}
+                </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/5 text-[#3C3C43]">
                   <Shield className="w-2.5 h-2.5 text-[#3C3C43]" />
@@ -59,7 +68,7 @@ export function Header({
           </div>
         </div>
 
-        {/* Center: Admin Main Navigation (iOS Segmented Control for Desktop / Tablet) */}
+        {/* Center: Admin & Kitchen Main Navigation (iOS Segmented Control for Desktop / Tablet) */}
         {!isSupplier && (
           <nav className="hidden lg:flex items-center bg-[#767680]/12 p-1 rounded-xl">
             <button
@@ -98,17 +107,19 @@ export function Header({
               <span>3. Gửi Zalo</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => onTabChange("reports")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 ${
-                activeAdminTab === "reports"
-                  ? "bg-white text-[#1C1C1E] shadow-[0_1px_3px_rgba(0,0,0,0.12)] font-bold"
-                  : "text-[#8E8E93] hover:text-[#1C1C1E]"
-              }`}
-            >
-              <span>4. Báo Cáo</span>
-            </button>
+            {!isKitchen && (
+              <button
+                type="button"
+                onClick={() => onTabChange("reports")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 ${
+                  activeAdminTab === "reports"
+                    ? "bg-white text-[#1C1C1E] shadow-[0_1px_3px_rgba(0,0,0,0.12)] font-bold"
+                    : "text-[#8E8E93] hover:text-[#1C1C1E]"
+                }`}
+              >
+                <span>4. Báo Cáo</span>
+              </button>
+            )}
           </nav>
         )}
 
@@ -132,7 +143,9 @@ export function Header({
               value={
                 session.role === "admin"
                   ? "admin"
-                  : `supplier:${session.supplierId}`
+                  : session.role === "supplier"
+                  ? `supplier:${session.supplierId}`
+                  : `kitchen:${session.kitchenId}`
               }
               onChange={(e) => {
                 const val = e.target.value;
@@ -140,16 +153,31 @@ export function Header({
                   onQuickRoleChange("admin", null);
                 } else if (val.startsWith("supplier:")) {
                   onQuickRoleChange("supplier", val.split(":")[1]);
+                } else if (val.startsWith("kitchen:")) {
+                  onQuickRoleChange("kitchen", val.split(":")[1]);
                 }
               }}
               className="text-xs font-bold text-[#1C1C1E] bg-transparent focus:outline-none cursor-pointer pr-1"
             >
               <option value="admin">Quản lý Thu mua (Admin)</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={`supplier:${s.id}`}>
-                  NCC: {s.name}
-                </option>
-              ))}
+              {kitchens.length > 0 && (
+                <optgroup label="Cổng Bếp Ăn">
+                  {kitchens.map((k) => (
+                    <option key={k.id} value={`kitchen:${k.id}`}>
+                      Bếp: {k.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {suppliers.length > 0 && (
+                <optgroup label="Cổng Nhà Cung Cấp">
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={`supplier:${s.id}`}>
+                      NCC: {s.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 

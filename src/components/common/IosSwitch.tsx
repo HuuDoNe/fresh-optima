@@ -4,7 +4,8 @@ import React from "react";
 
 interface IosSwitchProps {
   checked: boolean;
-  onChange: (checked: boolean) => void;
+  onChange?: (checked: boolean) => void;
+  disabled?: boolean;
   labelActive?: string;
   labelInactive?: string;
 }
@@ -12,6 +13,7 @@ interface IosSwitchProps {
 export function IosSwitch({
   checked,
   onChange,
+  disabled = false,
   labelActive = "Còn hàng",
   labelInactive = "Hết hàng",
 }: IosSwitchProps) {
@@ -20,8 +22,15 @@ export function IosSwitch({
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex items-center gap-2 group cursor-pointer focus:outline-none select-none"
+      disabled={disabled}
+      onClick={() => {
+        if (!disabled && onChange) {
+          onChange(!checked);
+        }
+      }}
+      className={`flex items-center gap-2 group select-none ${
+        disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer focus:outline-none"
+      }`}
     >
       <div
         className={`w-11 h-6 flex items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out shrink-0 ${

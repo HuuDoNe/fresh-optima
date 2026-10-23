@@ -9,6 +9,7 @@ import {
   KitchenOrdersMap,
   OrderBatchSummary,
   SessionState,
+  UserRole,
 } from "@/lib/types";
 import {
   getAppState,
@@ -66,6 +67,7 @@ export default function FreshOptimaApp() {
   const [session, setSession] = useState<SessionState>({
     role: "admin",
     supplierId: null,
+    kitchenId: null,
   });
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>("quotes");
 
@@ -152,13 +154,31 @@ export default function FreshOptimaApp() {
   };
 
   // Role Switcher Handlers
-  const handleSelectRole = (role: "admin" | "supplier", supplierId?: string | null) => {
+  const handleSelectRole = (role: UserRole, id?: string | null) => {
     if (role === "supplier") {
-      const targetSup = suppliers.find((s) => s.id === supplierId) || suppliers[0];
-      setSession({ role: "supplier", supplierId: targetSup ? targetSup.id : null });
+      const targetSup = suppliers.find((s) => s.id === id) || suppliers[0];
+      setSession({
+        role: "supplier",
+        supplierId: targetSup ? targetSup.id : null,
+        kitchenId: null,
+      });
       notify(`Đã chuyển sang Cổng NCC: ${targetSup ? targetSup.name : ""}`);
+    } else if (role === "kitchen") {
+      const targetKitchen = kitchens.find((k) => k.id === id) || kitchens[0];
+      setSession({
+        role: "kitchen",
+        supplierId: null,
+        kitchenId: targetKitchen ? targetKitchen.id : null,
+      });
+      if (targetKitchen) {
+        setActiveKitchenId(targetKitchen.id);
+      }
+      if (activeAdminTab === "reports") {
+        setActiveAdminTab("quotes");
+      }
+      notify(`Đã chuyển sang Cổng Bếp: ${targetKitchen ? targetKitchen.name : ""}`);
     } else {
-      setSession({ role: "admin", supplierId: null });
+      setSession({ role: "admin", supplierId: null, kitchenId: null });
       notify("Đã chuyển sang quyền Quản lý Thu mua (Admin)");
     }
   };
@@ -170,6 +190,11 @@ export default function FreshOptimaApp() {
     price?: number,
     inStock?: boolean
   ) => {
+    if (session.role === "kitchen") {
+      notify("Bếp chỉ có quyền xem báo giá, không thể chỉnh sửa", "warn");
+      return;
+    }
+
     // Optimistic update
     setDayQuotes((prev) => {
       const next = { ...prev };
@@ -308,8 +333,13 @@ export default function FreshOptimaApp() {
       );
 
       await loadState(workingDate);
-      notify(`Đã chốt đơn các bếp ngày ${workingDate} vào Báo cáo chi phí`);
-      setActiveAdminTab("reports");
+      if (session.role === "kitchen") {
+        notify(`Đã chốt đơn ngày ${workingDate}!`);
+        setActiveAdminTab("po");
+      } else {
+        notify(`Đã chốt đơn các bếp ngày ${workingDate} vào Báo cáo chi phí`);
+        setActiveAdminTab("reports");
+      }
     } catch {
       notify("Lỗi chốt đơn", "warn");
     }
@@ -531,9 +561,13 @@ export default function FreshOptimaApp() {
       <Header
         session={session}
         suppliers={suppliers}
+        kitchens={kitchens}
         workingDate={workingDate}
         activeAdminTab={activeAdminTab}
-        onTabChange={(tab) => setActiveAdminTab(tab)}
+        onTabChange={(tab) => {
+          if (session.role === "kitchen" && tab === "reports") return;
+          setActiveAdminTab(tab);
+        }}
         onDateChange={handleDateChange}
         onOpenRoleModal={() => setRoleModalOpen(true)}
         onQuickRoleChange={handleSelectRole}
@@ -574,7 +608,7 @@ export default function FreshOptimaApp() {
             </div>
           )
         ) : (
-          /* ADMIN WORKSPACE (3 Tabs) */
+          /* ADMIN & KITCHEN WORKSPACE (3 or 4 Tabs) */
           <div>
             {activeAdminTab === "quotes" && (
               <TabQuotes
@@ -582,6 +616,7 @@ export default function FreshOptimaApp() {
                 suppliers={suppliers}
                 items={items}
                 dayQuotes={dayQuotes}
+                readOnly={session.role === "kitchen"}
                 onUpdateQuote={handleUpdateQuote}
                 onCopyAllYesterday={handleCopyAllYesterday}
                 onRandomizeMarket={handleRandomizeMarket}
@@ -608,8 +643,13 @@ export default function FreshOptimaApp() {
                 suppliers={suppliers}
                 dayQuotes={dayQuotes}
                 kitchenOrders={kitchenOrders}
-                activeKitchenId={activeKitchenId}
-                onSelectKitchen={(id) => setActiveKitchenId(id)}
+                activeKitchenId={session.role === "kitchen" && session.kitchenId ? session.kitchenId : activeKitchenId}
+                lockedKitchenId={session.role === "kitchen" ? (session.kitchenId || activeKitchenId) : null}
+                onSelectKitchen={(id) => {
+                  if (session.role !== "kitchen") {
+                    setActiveKitchenId(id);
+                  }
+                }}
                 onUpdateKitchenQty={handleUpdateKitchenQty}
                 onClearCurrentKitchenOrder={handleClearCurrentKitchenOrder}
                 onFillSampleOrders={handleFillSampleOrders}
@@ -638,6 +678,7 @@ export default function FreshOptimaApp() {
                 suppliers={suppliers}
                 dayQuotes={dayQuotes}
                 kitchenOrders={kitchenOrders}
+                lockedKitchenId={session.role === "kitchen" ? (session.kitchenId || activeKitchenId) : null}
                 onNotify={notify}
                 onBackToOrders={() => {
                   setActiveAdminTab("orders");
@@ -650,7 +691,7 @@ export default function FreshOptimaApp() {
               />
             )}
 
-            {activeAdminTab === "reports" && (
+            {activeAdminTab === "reports" && session.role !== "kitchen" && (
               <TabReports
                 workingDate={workingDate}
                 suppliers={suppliers}
@@ -669,22 +710,28 @@ export default function FreshOptimaApp() {
       </main>
 
       {/* iOS Cupertino Bottom Tab Bar */}
-      {session.role === "admin" && (
+      {(session.role === "admin" || session.role === "kitchen") && (
         <IosTabBar
           activeTab={activeAdminTab}
+          isKitchen={session.role === "kitchen"}
           onTabChange={(tab) => {
+            if (session.role === "kitchen" && tab === "reports") return;
             setActiveAdminTab(tab);
             if (typeof window !== "undefined") {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
           }}
           orderCount={
-            Object.values(kitchenOrders).reduce(
-              (acc, ko) =>
-                acc +
-                Object.values(ko).filter((v) => parseFloat(String(v)) > 0).length,
-              0
-            )
+            session.role === "kitchen" && (session.kitchenId || activeKitchenId)
+              ? Object.values(
+                  kitchenOrders[session.kitchenId || activeKitchenId] || {}
+                ).filter((v) => parseFloat(String(v)) > 0).length
+              : Object.values(kitchenOrders).reduce(
+                  (acc, ko) =>
+                    acc +
+                    Object.values(ko).filter((v) => parseFloat(String(v)) > 0).length,
+                  0
+                )
           }
         />
       )}
@@ -694,6 +741,7 @@ export default function FreshOptimaApp() {
         isOpen={roleModalOpen}
         onClose={() => setRoleModalOpen(false)}
         suppliers={suppliers}
+        kitchens={kitchens}
         session={session}
         onSelectRole={handleSelectRole}
       />

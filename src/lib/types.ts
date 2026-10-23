@@ -1,8 +1,9 @@
-export type UserRole = "admin" | "supplier";
+export type UserRole = "admin" | "supplier" | "kitchen";
 
 export interface SessionState {
   role: UserRole;
   supplierId: string | null;
+  kitchenId: string | null;
 }
 
 export interface SupplierData {

@@ -34,6 +34,7 @@ interface TabPOProps {
   suppliers: SupplierData[];
   dayQuotes: DateQuotesMap;
   kitchenOrders: KitchenOrdersMap;
+  lockedKitchenId?: string | null;
   onNotify: (msg: string, type?: "default" | "warn") => void;
   onBackToOrders: () => void;
   onProceedToReports: () => void;
@@ -46,6 +47,7 @@ export function TabPO({
   suppliers,
   dayQuotes,
   kitchenOrders,
+  lockedKitchenId = null,
   onNotify,
   onBackToOrders,
   onProceedToReports,
@@ -55,7 +57,12 @@ export function TabPO({
   const [showTableDetail, setShowTableDetail] = useState(false);
 
   // Accordion state: which kitchen cards are expanded
-  const [expandedKitchens, setExpandedKitchens] = useState<Record<string, boolean>>({});
+  const [expandedKitchens, setExpandedKitchens] = useState<Record<string, boolean>>(() => {
+    if (lockedKitchenId) {
+      return { [lockedKitchenId]: true };
+    }
+    return {};
+  });
 
   // View mode: "by_kitchen" (Tách theo từng bếp) vs "by_supplier" (Tổng hợp theo NCC)
   const [viewMode, setViewMode] = useState<"by_kitchen" | "by_supplier">("by_kitchen");
@@ -179,7 +186,12 @@ export function TabPO({
     kg.totalCost += l.totalPrice;
   });
 
-  const kitchenList = Object.values(kitchenGroups);
+  const allKitchenList = Object.values(kitchenGroups);
+  const kitchenList = lockedKitchenId
+    ? allKitchenList.filter((k) => k.kitchenId === lockedKitchenId)
+    : allKitchenList;
+
+  const currentKitchenGroup = lockedKitchenId ? kitchenGroups[lockedKitchenId] : null;
 
   // ========================================================
   // 2. DATA GROUPED BY SUPPLIER (Dùng cho chế độ xem tổng hợp)
@@ -241,6 +253,16 @@ export function TabPO({
 
   const allocatedSuppliersCount = Object.keys(supGroups).length;
 
+  const displayTotalCost = currentKitchenGroup
+    ? currentKitchenGroup.totalCost
+    : allocation.totalCost;
+  const displayTotalKg = currentKitchenGroup
+    ? currentKitchenGroup.totalKg
+    : allocation.allocatedKg;
+  const displaySuppliersCount = currentKitchenGroup
+    ? Object.keys(currentKitchenGroup.supplierBlocks).length
+    : allocatedSuppliersCount;
+
   return (
     <section className="animate-view space-y-4 pb-28 max-w-full overflow-x-hidden">
       {/* Step Header & Metrics Widget Grid */}
@@ -248,10 +270,14 @@ export function TabPO({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-extrabold text-[#1C1C1E] tracking-tight">
-              Phiếu Đặt Hàng & Gửi Zalo Từng Bếp
+              {lockedKitchenId
+                ? `Phiếu Đặt Hàng & Gửi Zalo - ${currentKitchenGroup?.kitchenName || "Bếp Ăn"}`
+                : "Phiếu Đặt Hàng & Gửi Zalo Từng Bếp"}
             </h2>
             <p className="text-xs text-[#8E8E93] mt-0.5">
-              Đơn hàng được chia theo từng bếp. Nhấn vào từng bếp để xem và sao chép tin nhắn Zalo gửi từng nhà cung cấp
+              {lockedKitchenId
+                ? `Đơn hàng của ${currentKitchenGroup?.kitchenName || "bếp"}. Nhấn sao chép để gửi tin nhắn Zalo cho từng nhà cung cấp.`
+                : "Đơn hàng được chia theo từng bếp. Nhấn vào từng bếp để xem và sao chép tin nhắn Zalo gửi từng nhà cung cấp"}
             </p>
           </div>
 
@@ -264,14 +290,16 @@ export function TabPO({
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Sửa số lượng</span>
             </button>
-            <button
-              type="button"
-              onClick={onProceedToReports}
-              className="px-3 py-1.5 rounded-full bg-[#1C1C1E] text-xs font-bold text-white transition active:scale-95 flex items-center gap-1"
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Xem Báo Cáo</span>
-            </button>
+            {!lockedKitchenId && (
+              <button
+                type="button"
+                onClick={onProceedToReports}
+                className="px-3 py-1.5 rounded-full bg-[#1C1C1E] text-xs font-bold text-white transition active:scale-95 flex items-center gap-1"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Xem Báo Cáo</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -283,17 +311,26 @@ export function TabPO({
               <span>Tổng Tiền Đơn</span>
             </div>
             <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
-              {formatVND(allocation.totalCost)}
+              {formatVND(displayTotalCost)}
             </div>
           </div>
 
           <div className="bg-[#F2F2F7] rounded-2xl p-3 border border-black/5">
             <div className="flex items-center gap-1.5 text-[#8E8E93] text-[11px] font-semibold">
               <TrendingDown className="w-3.5 h-3.5 text-[#34C759]" />
-              <span>Tiết Kiệm Được</span>
+              <span>{lockedKitchenId ? "Tổng Số Món" : "Tiết Kiệm Được"}</span>
             </div>
             <div className="text-base sm:text-lg font-extrabold text-[#34C759] mt-1 tnum">
-              {formatVND(allocation.totalSaved)}
+              {lockedKitchenId
+                ? `${
+                    currentKitchenGroup
+                      ? Object.values(currentKitchenGroup.supplierBlocks).reduce(
+                          (acc, sb) => acc + sb.items.length,
+                          0
+                        )
+                      : 0
+                  } Món`
+                : formatVND(allocation.totalSaved)}
             </div>
           </div>
 
@@ -303,51 +340,55 @@ export function TabPO({
               <span>Tổng Khối Lượng</span>
             </div>
             <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
-              {allocation.allocatedKg} kg
+              {displayTotalKg} kg
             </div>
           </div>
 
           <div className="bg-[#F2F2F7] rounded-2xl p-3 border border-black/5">
             <div className="flex items-center gap-1.5 text-[#8E8E93] text-[11px] font-semibold">
               <Utensils className="w-3.5 h-3.5 text-[#5856D6]" />
-              <span>Số Bếp Đặt</span>
+              <span>{lockedKitchenId ? "Nhà Cung Cấp" : "Số Bếp Đặt"}</span>
             </div>
             <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
-              {kitchenList.length} Bếp Ăn
+              {lockedKitchenId
+                ? `${displaySuppliersCount} NCC Cung Ứng`
+                : `${kitchenList.length} Bếp Ăn`}
             </div>
           </div>
         </div>
 
-        {/* View Mode Switcher: By Kitchen (Default) vs By Supplier */}
-        <div className="flex items-center justify-between pt-1 border-t border-[#3C3C43]/10">
-          <div className="text-xs text-[#8E8E93] font-medium">
-            Chế độ hiển thị:
+        {/* View Mode Switcher: By Kitchen (Default) vs By Supplier (Hidden if lockedKitchenId) */}
+        {!lockedKitchenId && (
+          <div className="flex items-center justify-between pt-1 border-t border-[#3C3C43]/10">
+            <div className="text-xs text-[#8E8E93] font-medium">
+              Chế độ hiển thị:
+            </div>
+            <div className="inline-flex bg-[#767680]/12 p-0.5 rounded-full text-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode("by_kitchen")}
+                className={`px-3 py-1 rounded-full font-bold transition ${
+                  viewMode === "by_kitchen"
+                    ? "bg-white text-[#1C1C1E] shadow-2xs"
+                    : "text-[#8E8E93]"
+                }`}
+              >
+                Chia Theo Từng Bếp (Khuyên dùng)
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("by_supplier")}
+                className={`px-3 py-1 rounded-full font-bold transition ${
+                  viewMode === "by_supplier"
+                    ? "bg-white text-[#1C1C1E] shadow-2xs"
+                    : "text-[#8E8E93]"
+                }`}
+              >
+                Tổng Hợp Theo NCC
+              </button>
+            </div>
           </div>
-          <div className="inline-flex bg-[#767680]/12 p-0.5 rounded-full text-xs">
-            <button
-              type="button"
-              onClick={() => setViewMode("by_kitchen")}
-              className={`px-3 py-1 rounded-full font-bold transition ${
-                viewMode === "by_kitchen"
-                  ? "bg-white text-[#1C1C1E] shadow-2xs"
-                  : "text-[#8E8E93]"
-              }`}
-            >
-              Chia Theo Từng Bếp (Khuyên dùng)
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("by_supplier")}
-              className={`px-3 py-1 rounded-full font-bold transition ${
-                viewMode === "by_supplier"
-                  ? "bg-white text-[#1C1C1E] shadow-2xs"
-                  : "text-[#8E8E93]"
-              }`}
-            >
-              Tổng Hợp Theo NCC
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ======================================================== */}
@@ -642,68 +683,74 @@ export function TabPO({
         </div>
       )}
 
-      {/* Optional Table Detail Toggle */}
-      <div className="ios-card p-4 space-y-3">
-        <button
-          type="button"
-          onClick={() => setShowTableDetail(!showTableDetail)}
-          className="w-full flex items-center justify-between text-xs font-bold text-[#1C1C1E] transition"
-        >
-          <span>Xem bảng phân bổ chi tiết ({allocation.lines.length} dòng)</span>
-          {showTableDetail ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+      {/* Optional Table Detail Toggle (Admin Only) */}
+      {!lockedKitchenId && (
+        <div className="ios-card p-4 space-y-3">
+          <button
+            type="button"
+            onClick={() => setShowTableDetail(!showTableDetail)}
+            className="w-full flex items-center justify-between text-xs font-bold text-[#1C1C1E] transition"
+          >
+            <span>Xem bảng phân bổ chi tiết ({allocation.lines.length} dòng)</span>
+            {showTableDetail ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
 
-        {showTableDetail && (
-          <div className="overflow-x-auto pt-2">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[#3C3C43]/10 bg-[#F2F2F7] text-[11px] font-bold text-[#8E8E93]">
-                  <th className="py-2.5 px-3">Bếp</th>
-                  <th className="py-2.5 px-3">Mặt hàng</th>
-                  <th className="py-2.5 px-3 text-right">SL</th>
-                  <th className="py-2.5 px-3">NCC chọn</th>
-                  <th className="py-2.5 px-3 text-right">Đơn giá</th>
-                  <th className="py-2.5 px-3 text-right">Thành tiền</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#3C3C43]/10">
-                {allocation.lines.map((l, idx) => (
-                  <tr key={idx} className="hover:bg-black/[0.015]">
-                    <td className="py-2 px-3 font-bold" style={{ color: l.kitchenColor }}>
-                      {l.kitchenName}
-                    </td>
-                    <td className="py-2 px-3 font-medium text-[#1C1C1E]">{l.itemName}</td>
-                    <td className="py-2 px-3 text-right font-bold tnum">{l.qty} {l.unit}</td>
-                    <td className="py-2 px-3 text-[#1C1C1E]">{l.supplierName}</td>
-                    <td className="py-2 px-3 text-right text-[#8E8E93] tnum">{formatVND(l.unitPrice)}</td>
-                    <td className="py-2 px-3 text-right font-bold text-[#34C759] tnum">{formatVND(l.totalPrice)}</td>
+          {showTableDetail && (
+            <div className="overflow-x-auto pt-2">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-[#3C3C43]/10 bg-[#F2F2F7] text-[11px] font-bold text-[#8E8E93]">
+                    <th className="py-2.5 px-3">Bếp</th>
+                    <th className="py-2.5 px-3">Mặt hàng</th>
+                    <th className="py-2.5 px-3 text-right">SL</th>
+                    <th className="py-2.5 px-3">NCC chọn</th>
+                    <th className="py-2.5 px-3 text-right">Đơn giá</th>
+                    <th className="py-2.5 px-3 text-right">Thành tiền</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody className="divide-y divide-[#3C3C43]/10">
+                  {allocation.lines.map((l, idx) => (
+                    <tr key={idx} className="hover:bg-black/[0.015]">
+                      <td className="py-2 px-3 font-bold" style={{ color: l.kitchenColor }}>
+                        {l.kitchenName}
+                      </td>
+                      <td className="py-2 px-3 font-medium text-[#1C1C1E]">{l.itemName}</td>
+                      <td className="py-2 px-3 text-right font-bold tnum">{l.qty} {l.unit}</td>
+                      <td className="py-2 px-3 text-[#1C1C1E]">{l.supplierName}</td>
+                      <td className="py-2 px-3 text-right text-[#8E8E93] tnum">{formatVND(l.unitPrice)}</td>
+                      <td className="py-2 px-3 text-right font-bold text-[#34C759] tnum">{formatVND(l.totalPrice)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Floating Action Button (Step 3 -> Reports) */}
+      {/* Floating Action Buttons */}
       <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBackToOrders}
-          className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-white border border-[#3C3C43]/15 hover:bg-[#F2F2F7] text-[#1C1C1E] text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-98"
+          className={`${
+            lockedKitchenId ? "w-full" : "w-full sm:w-auto"
+          } px-4 py-3.5 rounded-2xl bg-white border border-[#3C3C43]/15 hover:bg-[#F2F2F7] text-[#1C1C1E] text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-98`}
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Sửa số lượng</span>
+          <span>Quay lại sửa số lượng đặt hàng</span>
         </button>
 
-        <button
-          type="button"
-          onClick={onProceedToReports}
-          className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl font-bold text-sm sm:text-base bg-[#1C1C1E] text-white hover:bg-black transition flex items-center justify-center gap-2 shadow-sm active:scale-98"
-        >
-          <span>Xem Báo Cáo Chi Phí (Bước 4)</span>
-          <BarChart3 className="w-4 h-4" />
-        </button>
+        {!lockedKitchenId && (
+          <button
+            type="button"
+            onClick={onProceedToReports}
+            className="w-full sm:flex-1 py-3.5 px-5 rounded-2xl font-bold text-sm sm:text-base bg-[#1C1C1E] text-white hover:bg-black transition flex items-center justify-center gap-2 shadow-sm active:scale-98"
+          >
+            <span>Xem Báo Cáo Chi Phí (Bước 4)</span>
+            <BarChart3 className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </section>
   );

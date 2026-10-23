@@ -27,6 +27,7 @@ interface TabOrdersProps {
   dayQuotes: DateQuotesMap;
   kitchenOrders: KitchenOrdersMap;
   activeKitchenId: string;
+  lockedKitchenId?: string | null;
   onSelectKitchen: (id: string) => void;
   onUpdateKitchenQty: (itemId: string, qty: number) => void;
   onClearCurrentKitchenOrder: () => void;
@@ -46,6 +47,7 @@ export function TabOrders({
   dayQuotes,
   kitchenOrders,
   activeKitchenId,
+  lockedKitchenId = null,
   onSelectKitchen,
   onUpdateKitchenQty,
   onClearCurrentKitchenOrder,
@@ -60,8 +62,13 @@ export function TabOrders({
   const [filterMode, setFilterMode] = useState<"all" | "ordered">("all");
   const [committing, setCommitting] = useState(false);
 
+  const effectiveKitchenId = lockedKitchenId || activeKitchenId;
+  const displayedKitchens = lockedKitchenId
+    ? kitchens.filter((k) => k.id === lockedKitchenId)
+    : kitchens;
+
   const activeKitchen =
-    kitchens.find((k) => k.id === activeKitchenId) || kitchens[0] || {
+    kitchens.find((k) => k.id === effectiveKitchenId) || kitchens[0] || {
       id: "k1",
       name: "Bếp A",
       note: "",
@@ -103,7 +110,8 @@ export function TabOrders({
   });
 
   const handleCommitAndProceed = async () => {
-    if (totalAllKg <= 0) {
+    const requiredKg = lockedKitchenId ? curKitchenKg : totalAllKg;
+    if (requiredKg <= 0) {
       onNotify("Vui lòng nhập số lượng cho ít nhất 1 mặt hàng", "warn");
       return;
     }
@@ -128,37 +136,41 @@ export function TabOrders({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-extrabold text-[#1C1C1E] tracking-tight">
-              Đặt Hàng Từng Bếp
+              {lockedKitchenId ? `Đặt Hàng - ${activeKitchen.name}` : "Đặt Hàng Từng Bếp"}
             </h2>
             <p className="text-xs text-[#8E8E93] mt-0.5">
-              Chọn bếp để lên số lượng riêng biệt, không gộp chung
+              {lockedKitchenId
+                ? `Nhập số lượng thực phẩm đặt cho ${activeKitchen.name}`
+                : "Chọn bếp để lên số lượng riêng biệt, không gộp chung"}
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={onFillSampleOrders}
-              className="px-2.5 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1"
-              title="Điền mẫu"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#FF9500]" />
-              <span className="hidden sm:inline">Điền mẫu</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenKitchenModal(null)}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-[#34C759] hover:bg-[#28CD41] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Thêm Bếp</span>
-            </button>
-          </div>
+          {!lockedKitchenId && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={onFillSampleOrders}
+                className="px-2.5 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1"
+                title="Điền mẫu"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#FF9500]" />
+                <span className="hidden sm:inline">Điền mẫu</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenKitchenModal(null)}
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-[#34C759] hover:bg-[#28CD41] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Thêm Bếp</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Cupertino Segmented Tabs for Kitchens */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
-          {kitchens.map((k) => {
+          {displayedKitchens.map((k) => {
             const isSelected = k.id === activeKitchen.id;
             const ko = kitchenOrders[k.id] || {};
             let cnt = 0;
