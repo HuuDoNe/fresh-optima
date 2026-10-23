@@ -29,11 +29,22 @@ async function runTests() {
     k3: { v7: 25, v8: 20, v3: 15 },         // Bếp C
   };
 
+  // Đảm bảo dữ liệu test có trường hợp sup3 hết hàng Cà chua để kiểm tra fallback
+  const testQuotes = {
+    ...state.dayQuotes,
+    v5: {
+      ...state.dayQuotes.v5,
+      sup1: { price: 23500, inStock: true },
+      sup2: { price: 22000, inStock: true },
+      sup3: { price: 20500, inStock: false }, // sup3 rẻ nhất nhưng hết hàng
+    },
+  };
+
   const allocation = runPerKitchenAllocation(
     state.kitchens,
     state.items,
     state.suppliers,
-    state.dayQuotes,
+    testQuotes,
     kitchenOrders,
     null
   );

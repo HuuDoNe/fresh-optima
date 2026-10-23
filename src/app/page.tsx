@@ -554,6 +554,10 @@ export default function FreshOptimaApp() {
               workingDate={workingDate}
               items={items}
               dayQuotes={dayQuotes}
+              kitchens={kitchens}
+              kitchenOrders={kitchenOrders}
+              history={history}
+              suppliers={suppliers}
               onUpdateQuote={(itemId, price, inStock) =>
                 handleUpdateQuote(itemId, currentLoggedSupplier.id, price, inStock)
               }
