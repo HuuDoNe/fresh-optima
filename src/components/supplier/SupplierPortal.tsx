@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SupplierData,
   VegetableItemData,
@@ -27,7 +27,11 @@ import {
   Check,
   Truck,
   Utensils,
-  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Circle,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { IosSwitch } from "@/components/common/IosSwitch";
 
@@ -74,6 +78,48 @@ export function SupplierPortal({
   const [activeTab, setActiveTab] = useState<"quotes" | "orders">("quotes");
   const [searchTerm, setSearchTerm] = useState("");
   const [copiedPackingList, setCopiedPackingList] = useState(false);
+
+  // Accordion state: which kitchen cards are expanded
+  const [expandedKitchens, setExpandedKitchens] = useState<Record<string, boolean>>({});
+
+  // Checklist state: key = `${kitchenId}_${itemId}` -> boolean (has been delivered)
+  const [deliveredMap, setDeliveredMap] = useState<Record<string, boolean>>({});
+
+  // Load delivered checklist from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storageKey = `delivery_checklist_${workingDate}_${supplier.id}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setDeliveredMap(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [workingDate, supplier.id]);
+
+  // Toggle delivery checklist item
+  const toggleDelivered = (kitchenId: string, itemId: string) => {
+    const key = `${kitchenId}_${itemId}`;
+    setDeliveredMap((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (typeof window !== "undefined") {
+        const storageKey = `delivery_checklist_${workingDate}_${supplier.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+
+  // Toggle expand/collapse of a kitchen
+  const toggleKitchenExpand = (kitchenId: string) => {
+    setExpandedKitchens((prev) => ({
+      ...prev,
+      [kitchenId]: !prev[kitchenId],
+    }));
+  };
 
   // --- 1. QUOTES DATA ---
   const filteredItems = items.filter((it) =>
@@ -196,6 +242,23 @@ export function SupplierPortal({
 
   const kitchenBlocks = Object.values(byKitchen);
 
+  // Mark all items of a kitchen as delivered or undelivered
+  const toggleAllKitchenDelivered = (kitchenId: string, kitchenItems: typeof supplierLines) => {
+    const allChecked = kitchenItems.every((it) => deliveredMap[`${kitchenId}_${it.itemId}`]);
+    setDeliveredMap((prev) => {
+      const next = { ...prev };
+      kitchenItems.forEach((it) => {
+        next[`${kitchenId}_${it.itemId}`] = !allChecked;
+      });
+      if (typeof window !== "undefined") {
+        const storageKey = `delivery_checklist_${workingDate}_${supplier.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      }
+      return next;
+    });
+    onNotify(allChecked ? "Đã bỏ tích giao hàng" : "Đã tích giao đủ tất cả món của bếp!");
+  };
+
   // Copy packing list per kitchen
   const handleCopyPackingList = async () => {
     if (supplierLines.length === 0) return;
@@ -209,7 +272,10 @@ export function SupplierPortal({
         kb.kitchenNote ? ` (${kb.kitchenNote})` : ""
       }:\n`;
       kb.items.forEach((it, idx) => {
-        text += `  ${idx + 1}. ${it.itemName}: ${it.qty} ${it.unit}\n`;
+        const isDeliv = deliveredMap[`${kb.kitchenId}_${it.itemId}`];
+        text += `  ${idx + 1}. ${it.itemName}: ${it.qty} ${it.unit} ${
+          isDeliv ? "[ĐÃ GIAO ĐỦ]" : ""
+        }\n`;
       });
       text += `  -> Tổng ${kb.kitchenName}: ${kb.totalKg} kg\n\n`;
     });
@@ -479,7 +545,7 @@ export function SupplierPortal({
                   ) : null}
                 </div>
                 <p className="text-xs text-[#8E8E93] mt-0.5">
-                  Đơn hàng được chia riêng theo từng bếp để đóng gói và giao đúng nơi
+                  Nhấn vào từng bếp bên dưới để xem mặt hàng và tích chọn kiểm tra giao hàng
                 </p>
               </div>
 
@@ -538,8 +604,8 @@ export function SupplierPortal({
             </div>
           </div>
 
-          {/* List of Kitchen Order Cards (CHIA ĐƠN TỪNG BẾP) */}
-          <div className="space-y-3.5">
+          {/* List of Kitchen Order Accordions (CLICK VÀO TỪNG BẾP ĐỂ MỞ RA MẶT HÀNG & TÍCH GIAO ĐỦ) */}
+          <div className="space-y-3">
             {kitchenBlocks.length === 0 ? (
               <div className="ios-card p-12 text-center space-y-3">
                 <div className="w-12 h-12 rounded-full bg-[#F2F2F7] text-[#8E8E93] flex items-center justify-center mx-auto text-xl">
@@ -553,85 +619,221 @@ export function SupplierPortal({
                 </p>
               </div>
             ) : (
-              kitchenBlocks.map((kb) => (
-                <div key={kb.kitchenId} className="ios-card overflow-hidden">
-                  {/* Kitchen Header */}
-                  <div className="p-4 border-b border-[#3C3C43]/10 flex items-center justify-between gap-3 bg-gradient-to-r from-[#F2F2F7]/60 to-white">
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: kb.kitchenColor }}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-extrabold text-sm sm:text-base text-[#1C1C1E]">
-                            ĐƠN HÀNG: {kb.kitchenName.toUpperCase()}
-                          </h4>
-                          <span className="text-[11px] font-bold text-[#248A3D] bg-[#34C759]/15 px-2 py-0.5 rounded-full">
-                            {kb.items.length} món · {kb.totalKg} kg
-                          </span>
+              kitchenBlocks.map((kb, kIdx) => {
+                // By default: first kitchen is expanded, or if user toggled
+                const isExpanded =
+                  expandedKitchens[kb.kitchenId] !== undefined
+                    ? expandedKitchens[kb.kitchenId]
+                    : kIdx === 0;
+
+                // Calculate delivery progress for this kitchen
+                const deliveredCount = kb.items.filter(
+                  (it) => deliveredMap[`${kb.kitchenId}_${it.itemId}`]
+                ).length;
+                const isAllDelivered = deliveredCount === kb.items.length && kb.items.length > 0;
+                const hasPartial = deliveredCount > 0 && !isAllDelivered;
+
+                return (
+                  <div
+                    key={kb.kitchenId}
+                    className="ios-card overflow-hidden transition-all duration-200"
+                  >
+                    {/* Clickable Kitchen Header (Accordion Trigger) */}
+                    <button
+                      type="button"
+                      onClick={() => toggleKitchenExpand(kb.kitchenId)}
+                      className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-black/[0.015] active:bg-black/[0.03] transition select-none cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                          style={{ backgroundColor: kb.kitchenColor }}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-extrabold text-sm sm:text-base text-[#1C1C1E]">
+                              {kb.kitchenName.toUpperCase()}
+                            </h4>
+
+                            {/* Delivery Status Badge */}
+                            {isAllDelivered ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D]">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                                <span>Đã giao đủ ({deliveredCount}/{kb.items.length})</span>
+                              </span>
+                            ) : hasPartial ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FF9500]/15 text-[#D97706]">
+                                <span>Đã giao {deliveredCount}/{kb.items.length} món</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#767680]/12 text-[#8E8E93]">
+                                <span>Chưa giao (0/{kb.items.length})</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-xs text-[#8E8E93] mt-0.5 flex flex-wrap items-center gap-x-2">
+                            <span className="font-semibold text-[#1C1C1E] tnum">
+                              {kb.items.length} món · {kb.totalKg} kg
+                            </span>
+                            <span>•</span>
+                            <span className="font-bold text-[#34C759] tnum">
+                              {formatVND(kb.totalCost)}
+                            </span>
+                            {kb.kitchenNote && (
+                              <>
+                                <span className="hidden sm:inline">•</span>
+                                <span className="hidden sm:inline truncate max-w-xs">
+                                  {kb.kitchenNote}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        {kb.kitchenNote && (
-                          <div className="text-xs text-[#8E8E93] mt-0.5">
-                            📍 Ghi chú giao hàng:{" "}
-                            <span className="text-[#1C1C1E] font-medium">
-                              {kb.kitchenNote}
+                      </div>
+
+                      {/* Expand / Collapse Chevron */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-semibold text-[#8E8E93] hidden sm:inline">
+                          {isExpanded ? "Thu gọn" : "Xem mặt hàng"}
+                        </span>
+                        <div className="w-7 h-7 rounded-full bg-[#767680]/12 flex items-center justify-center text-[#1C1C1E]">
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Expandable Kitchen Content */}
+                    {isExpanded && (
+                      <div className="border-t border-[#3C3C43]/10 bg-gradient-to-b from-white to-[#F2F2F7]/30">
+                        {/* Kitchen Address / Note Bar & Quick Action */}
+                        <div className="p-3 sm:px-4 bg-[#F2F2F7]/60 border-b border-[#3C3C43]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                          <div className="text-[#8E8E93]">
+                            📍 Địa chỉ/Ghi chú:{" "}
+                            <span className="font-semibold text-[#1C1C1E]">
+                              {kb.kitchenNote || "Không có ghi chú"}
                             </span>
                           </div>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="text-right">
-                      <div className="text-xs text-[#8E8E93]">Cộng tiền:</div>
-                      <div className="text-sm sm:text-base font-extrabold text-[#34C759] tnum">
-                        {formatVND(kb.totalCost)}
-                      </div>
-                    </div>
-                  </div>
+                          {/* Quick 1-click button to check/uncheck all for this kitchen */}
+                          <button
+                            type="button"
+                            onClick={() => toggleAllKitchenDelivered(kb.kitchenId, kb.items)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 flex items-center gap-1.5 self-start sm:self-auto ${
+                              isAllDelivered
+                                ? "bg-[#767680]/15 text-[#1C1C1E]"
+                                : "bg-[#34C759]/15 text-[#248A3D] hover:bg-[#34C759]/25"
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>
+                              {isAllDelivered
+                                ? "Bỏ tích giao đủ bếp này"
+                                : `Tích giao đủ toàn bộ ${kb.kitchenName}`}
+                            </span>
+                          </button>
+                        </div>
 
-                  {/* Items for this specific kitchen */}
-                  <div className="divide-y divide-[#3C3C43]/10 text-xs">
-                    {kb.items.map((it, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-black/[0.015] transition"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="w-5 h-5 rounded-full bg-[#767680]/12 text-[#1C1C1E] text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {idx + 1}
+                        {/* List of Items with Delivery Checkboxes */}
+                        <div className="divide-y divide-[#3C3C43]/10 text-xs">
+                          {kb.items.map((it, idx) => {
+                            const isDelivered = !!deliveredMap[`${kb.kitchenId}_${it.itemId}`];
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
+                                  isDelivered ? "bg-[#34C759]/[0.05]" : "hover:bg-black/[0.015]"
+                                }`}
+                              >
+                                {/* Item Details */}
+                                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                                  <span className="w-5 h-5 rounded-full bg-[#767680]/12 text-[#1C1C1E] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                                    {idx + 1}
+                                  </span>
+
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={`font-bold text-sm truncate ${
+                                          isDelivered
+                                            ? "text-[#1C1C1E]"
+                                            : "text-[#1C1C1E]"
+                                        }`}
+                                      >
+                                        {it.itemName}
+                                      </span>
+                                      <span className="text-[11px] text-[#8E8E93] font-mono bg-[#767680]/10 px-1.5 py-0.2 rounded shrink-0">
+                                        /{it.unit}
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-[#8E8E93] mt-0.5">
+                                      Đơn giá: {formatVND(it.unitPrice)} • Thành tiền:{" "}
+                                      <strong className="text-[#34C759] font-bold">
+                                        {formatVND(it.totalPrice)}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Right: Quantity & Interactive Delivery Checklist Button */}
+                                <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0 pl-8 sm:pl-0">
+                                  <div className="text-left sm:text-right">
+                                    <div className="text-sm font-extrabold text-[#1C1C1E] tnum">
+                                      {it.qty} {it.unit}
+                                    </div>
+                                  </div>
+
+                                  {/* TÍCH CHỌN ĐÃ GIAO ĐỦ / CHƯA GIAO */}
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleDelivered(kb.kitchenId, it.itemId)}
+                                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-150 flex items-center gap-2 active:scale-95 cursor-pointer shadow-2xs select-none ${
+                                      isDelivered
+                                        ? "bg-[#34C759] border-[#34C759] text-white"
+                                        : "bg-white border-[#3C3C43]/20 text-[#1C1C1E] hover:border-[#34C759]"
+                                    }`}
+                                    title="Chạm để đánh dấu đã giao đủ hay chưa"
+                                  >
+                                    <div
+                                      className={`w-4 h-4 rounded-md flex items-center justify-center transition ${
+                                        isDelivered
+                                          ? "bg-white text-[#34C759]"
+                                          : "border border-[#8E8E93] bg-[#F2F2F7]"
+                                      }`}
+                                    >
+                                      {isDelivered && (
+                                        <Check className="w-3 h-3 stroke-[3]" />
+                                      )}
+                                    </div>
+                                    <span>
+                                      {isDelivered ? "Đã giao đủ" : "Chưa giao"}
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Kitchen Subtotal Footer */}
+                        <div className="p-3.5 bg-[#F2F2F7]/50 border-t border-[#3C3C43]/10 flex items-center justify-between text-xs text-[#8E8E93]">
+                          <span>
+                            Đóng gói riêng cho <strong>{kb.kitchenName}</strong>
                           </span>
-                          <div>
-                            <div className="font-bold text-sm text-[#1C1C1E]">
-                              {it.itemName}
-                            </div>
-                            <div className="text-[11px] text-[#8E8E93] mt-0.5">
-                              Đơn giá: {formatVND(it.unitPrice)}/{it.unit}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right shrink-0">
-                          <div className="text-sm font-extrabold text-[#1C1C1E] tnum">
-                            {it.qty} {it.unit}
-                          </div>
-                          <div className="text-[11px] font-bold text-[#34C759] tnum">
-                            {formatVND(it.totalPrice)}
-                          </div>
+                          <span className="font-extrabold text-[#1C1C1E]">
+                            Tổng {kb.kitchenName}: {kb.totalKg} kg ({formatVND(kb.totalCost)})
+                          </span>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-
-                  {/* Kitchen Footer Note */}
-                  <div className="p-3 bg-[#F2F2F7]/50 border-t border-[#3C3C43]/10 flex items-center justify-between text-xs text-[#8E8E93]">
-                    <span>⚠️ Đóng gói riêng cho {kb.kitchenName}</span>
-                    <span className="font-bold text-[#1C1C1E]">
-                      Tổng: {kb.totalKg} kg
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
