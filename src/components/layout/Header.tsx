@@ -49,20 +49,38 @@ export function Header({
                 FreshOptima
               </span>
               {isSupplier ? (
-                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D] truncate">
+                <button
+                  type="button"
+                  onClick={onOpenRoleModal}
+                  className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D] truncate hover:bg-[#34C759]/25 transition cursor-pointer"
+                  title="Nhấn để đổi vai trò"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] shrink-0" />
-                  {activeSupplier ? activeSupplier.name : "NCC"}
-                </span>
+                  <span>{activeSupplier ? activeSupplier.name : "NCC"}</span>
+                  <span className="text-[9px] opacity-70">▼</span>
+                </button>
               ) : isKitchen ? (
-                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#007AFF]/15 text-[#007AFF] truncate">
+                <button
+                  type="button"
+                  onClick={onOpenRoleModal}
+                  className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#007AFF]/15 text-[#007AFF] truncate hover:bg-[#007AFF]/25 transition cursor-pointer"
+                  title="Nhấn để đổi vai trò"
+                >
                   <UtensilsCrossed className="w-3 h-3 text-[#007AFF] shrink-0" />
-                  {activeKitchen ? activeKitchen.name : "Bếp Ăn"}
-                </span>
+                  <span>{activeKitchen ? activeKitchen.name : "Bếp Ăn"}</span>
+                  <span className="text-[9px] opacity-70">▼</span>
+                </button>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/5 text-[#3C3C43]">
+                <button
+                  type="button"
+                  onClick={onOpenRoleModal}
+                  className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/5 text-[#3C3C43] hover:bg-black/10 transition cursor-pointer"
+                  title="Nhấn để đổi vai trò"
+                >
                   <Shield className="w-2.5 h-2.5 text-[#3C3C43]" />
-                  Admin
-                </span>
+                  <span>Admin</span>
+                  <span className="text-[9px] opacity-70">▼</span>
+                </button>
               )}
             </div>
           </div>

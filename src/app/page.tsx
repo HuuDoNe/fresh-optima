@@ -87,8 +87,28 @@ export default function FreshOptimaApp() {
   });
   const [activeKitchenId, setActiveKitchenId] = useState<string>("k1");
 
-  // Modals state
+  // Modals & Role Selection Gatekeeper state
+  const [hasSelectedRole, setHasSelectedRole] = useState(false);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [lastSavedRole, setLastSavedRole] = useState<{
+    role: UserRole;
+    id?: string | null;
+  } | null>(null);
+
+  // Load last saved role on client mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("freshoptima_last_role");
+        if (saved) {
+          setLastSavedRole(JSON.parse(saved));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierData | null>(null);
   const [supplierSelfModalOpen, setSupplierSelfModalOpen] = useState(false);
@@ -180,6 +200,21 @@ export default function FreshOptimaApp() {
     } else {
       setSession({ role: "admin", supplierId: null, kitchenId: null });
       notify("Đã chuyển sang quyền Quản lý Thu mua (Admin)");
+    }
+
+    setHasSelectedRole(true);
+    setRoleModalOpen(false);
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          "freshoptima_last_role",
+          JSON.stringify({ role, id: id || null })
+        );
+        setLastSavedRole({ role, id: id || null });
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -599,7 +634,7 @@ export default function FreshOptimaApp() {
               onSetAllInStock={handleSetAllInStock}
               onOpenSelfProfileModal={() => setSupplierSelfModalOpen(true)}
               onOpenAddItemModal={() => setItemModalOpen(true)}
-              onExitSupplierMode={() => handleSelectRole("admin")}
+              onExitSupplierMode={() => setRoleModalOpen(true)}
               onNotify={notify}
             />
           ) : (
@@ -738,11 +773,17 @@ export default function FreshOptimaApp() {
 
       {/* Global Modals */}
       <RoleSwitchModal
-        isOpen={roleModalOpen}
-        onClose={() => setRoleModalOpen(false)}
+        isOpen={!loading && (!hasSelectedRole || roleModalOpen)}
+        isMandatory={!hasSelectedRole}
+        onClose={() => {
+          if (hasSelectedRole) {
+            setRoleModalOpen(false);
+          }
+        }}
         suppliers={suppliers}
         kitchens={kitchens}
         session={session}
+        lastSavedRole={lastSavedRole}
         onSelectRole={handleSelectRole}
       />
 
