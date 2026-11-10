@@ -17,21 +17,16 @@ import {
   Copy,
   CheckCheck,
   Search,
-  CheckCircle2,
   Phone,
   MapPin,
   ShoppingBag,
   Tag,
   Package,
-  Layers,
-  Check,
   Truck,
   Utensils,
   ChevronDown,
   ChevronUp,
-  Circle,
-  CheckSquare,
-  Square,
+  Check,
 } from "lucide-react";
 import { IosSwitch } from "@/components/common/IosSwitch";
 
@@ -299,99 +294,95 @@ export function SupplierPortal({
   };
 
   return (
-    <section className="animate-view space-y-4 pb-28 max-w-full overflow-x-hidden">
-      {/* 1. Supplier Top Profile Banner */}
-      <div className="ios-card p-4 sm:p-5 space-y-3.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
-                Cổng Nhà Cung Cấp Độc Lập
-              </span>
-              <span className="text-xs text-[#8E8E93]">•</span>
-              <span className="text-xs font-semibold text-[#1C1C1E] tnum">
-                {workingDate}
-              </span>
+    <section className="space-y-3 pb-24 max-w-full overflow-x-hidden">
+      {/* 1. Supplier Top Profile Card */}
+      <div className="ios-card p-3.5 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#248A3D]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
+              <span>Cổng Nhà Cung Cấp</span>
+              <span className="text-[#8E8E93] font-normal">• {workingDate}</span>
             </div>
-
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#1C1C1E] tracking-tight">
+            <h1 className="text-base font-extrabold text-[#1C1C1E] tracking-tight truncate mt-0.5">
               {supplier.name}
             </h1>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#8E8E93]">
-              <span className="flex items-center gap-1 font-mono text-[#007AFF]">
-                <Phone className="w-3.5 h-3.5" />
-                <span>{supplier.phone || "Chưa có SĐT"}</span>
-              </span>
-              {supplier.note && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-[#8E8E93]" />
-                  <span>{supplier.note}</span>
-                </span>
-              )}
-            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={onOpenSelfProfileModal}
-              className="px-3 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1.5"
+              className="p-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] transition active:scale-90"
+              title="Sửa thông tin"
             >
               <Edit3 className="w-3.5 h-3.5 text-[#8E8E93]" />
-              <span>Sửa thông tin</span>
             </button>
-
             <button
               type="button"
               onClick={onOpenAddItemModal}
-              className="px-3 py-1.5 rounded-full bg-[#1C1C1E] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-2xs"
+              className="p-1.5 rounded-full bg-[#1C1C1E] text-white transition active:scale-90 shadow-2xs"
+              title="Thêm mặt hàng mới"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Thêm mặt hàng</span>
             </button>
-
             <button
               type="button"
               onClick={onExitSupplierMode}
-              className="p-2 rounded-full bg-[#767680]/10 hover:bg-[#FF3B30]/10 text-[#8E8E93] hover:text-[#FF3B30] transition active:scale-95"
-              title="Thoát cổng NCC (Về Admin)"
+              className="p-1.5 rounded-full bg-[#767680]/10 hover:bg-[#FF3B30]/10 text-[#8E8E93] hover:text-[#FF3B30] transition active:scale-90"
+              title="Đổi vai trò"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* 2. Cupertino Segmented Tabs: Switch between "Báo Giá" and "Đơn Hàng Đã Đặt" */}
-        <div className="grid grid-cols-2 gap-1 bg-[#767680]/12 p-1 rounded-2xl">
+        {(supplier.phone || supplier.note) && (
+          <div className="flex items-center gap-3 text-[11px] text-[#8E8E93] pt-0.5 border-t border-[#3C3C43]/10">
+            {supplier.phone && (
+              <span className="flex items-center gap-1 font-mono text-[#007AFF]">
+                <Phone className="w-3 h-3" />
+                <span>{supplier.phone}</span>
+              </span>
+            )}
+            {supplier.note && (
+              <span className="flex items-center gap-1 truncate">
+                <MapPin className="w-3 h-3 text-[#8E8E93] shrink-0" />
+                <span className="truncate">{supplier.note}</span>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Cupertino Segmented Tabs: Switch between "Báo Giá" and "Đơn Hàng Đã Đặt" */}
+        <div className="grid grid-cols-2 gap-1 bg-[#767680]/12 p-0.5 rounded-xl">
           <button
             type="button"
             onClick={() => setActiveTab("quotes")}
-            className={`py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 ${
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 ${
               activeTab === "quotes"
-                ? "bg-white text-[#1C1C1E] shadow-sm"
-                : "text-[#8E8E93] hover:text-[#1C1C1E]"
+                ? "bg-white text-[#1C1C1E] shadow-2xs"
+                : "text-[#8E8E93]"
             }`}
           >
-            <Tag className="w-4 h-4" />
-            <span>Báo Giá Sản Phẩm</span>
+            <Tag className="w-3.5 h-3.5" />
+            <span>Báo Giá</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("orders")}
-            className={`py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 relative ${
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 relative ${
               activeTab === "orders"
-                ? "bg-white text-[#34C759] shadow-sm"
-                : "text-[#8E8E93] hover:text-[#1C1C1E]"
+                ? "bg-white text-[#34C759] shadow-2xs"
+                : "text-[#8E8E93]"
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
-            <span>Đơn Hàng Nhận Được</span>
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>Đơn Nhận Được</span>
             {totalSupplierKg > 0 && (
-              <span className="min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#FF3B30] text-white text-[11px] font-extrabold flex items-center justify-center shadow-xs">
-                {kitchenBlocks.length} bếp · {totalSupplierKg}kg
+              <span className="px-1.5 py-0.2 rounded-full bg-[#FF3B30] text-white text-[10px] font-extrabold">
+                {kitchenBlocks.length}
               </span>
             )}
           </button>
@@ -402,62 +393,61 @@ export function SupplierPortal({
       {/* TAB 1: QUOTES MANAGEMENT (BÁO GIÁ SẢN PHẨM CỦA NCC) */}
       {/* ======================================================== */}
       {activeTab === "quotes" && (
-        <div className="space-y-3 animate-view">
-          {/* Quick Utility Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#1C1C1E]">
-                {items.length} mặt hàng
-              </span>
-              <span className="text-xs text-[#248A3D] font-bold bg-[#34C759]/15 px-2 py-0.5 rounded-full">
-                {inStockCount} món còn hàng
+        <div className="space-y-2.5">
+          {/* Quick Stats & Controls Bar */}
+          <div className="flex items-center justify-between gap-1.5 px-0.5">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold">
+              <span className="text-[#1C1C1E]">{items.length} món</span>
+              <span className="text-[#34C759] bg-[#34C759]/12 px-1.5 py-0.2 rounded-full">
+                {inStockCount} còn
               </span>
               {outStockCount > 0 && (
-                <span className="text-xs text-[#FF3B30] font-bold bg-[#FF3B30]/10 px-2 py-0.5 rounded-full">
-                  {outStockCount} món hết hàng
+                <span className="text-[#FF3B30] bg-[#FF3B30]/10 px-1.5 py-0.2 rounded-full">
+                  {outStockCount} hết
                 </span>
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 sm:w-48">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8E8E93]" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Tìm sản phẩm..."
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#3C3C43]/15 rounded-full focus:outline-none focus:border-[#34C759] shadow-2xs"
-                />
-              </div>
-
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={onCopyYesterday}
-                className="px-3 py-1.5 rounded-full bg-white border border-[#3C3C43]/15 hover:bg-[#F2F2F7] text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1 shadow-2xs"
+                className="px-2 py-1 rounded-full bg-white border border-[#3C3C43]/15 text-[#1C1C1E] text-[11px] font-semibold transition active:scale-95 flex items-center gap-1 shadow-2xs"
                 title="Sao chép toàn bộ giá từ ngày hôm trước"
               >
                 <Copy className="w-3 h-3 text-[#8E8E93]" />
-                <span>Chép hôm qua</span>
+                <span>Hôm qua</span>
               </button>
 
               <button
                 type="button"
                 onClick={onSetAllInStock}
-                className="px-3 py-1.5 rounded-full bg-[#34C759]/15 hover:bg-[#34C759]/20 text-[#248A3D] text-xs font-bold transition active:scale-95 flex items-center gap-1"
-                title="Bật còn hàng cho tất cả mặt hàng"
+                className="px-2 py-1 rounded-full bg-[#34C759]/15 text-[#248A3D] text-[11px] font-bold transition active:scale-95 flex items-center gap-1"
+                title="Bật còn hàng cho tất cả"
               >
-                <CheckCheck className="w-3.5 h-3.5 text-[#34C759]" />
-                <span>Còn hàng tất cả</span>
+                <CheckCheck className="w-3 h-3 text-[#34C759]" />
+                <span>Còn tất cả</span>
               </button>
             </div>
           </div>
 
-          {/* Inset Grouped Quotes List */}
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8E8E93]" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm mặt hàng rau củ..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#3C3C43]/15 rounded-xl focus:outline-none focus:border-[#34C759] shadow-2xs placeholder-[#8E8E93]"
+            />
+          </div>
+
+          {/* Compact Single-Line Quotes List */}
           <div className="ios-card overflow-hidden divide-y divide-[#3C3C43]/10">
             {!filteredItems.length ? (
-              <div className="py-12 text-center text-xs text-[#8E8E93]">
-                Không tìm thấy mặt hàng nào phù hợp.
+              <div className="py-8 text-center text-xs text-[#8E8E93]">
+                Không tìm thấy mặt hàng nào.
               </div>
             ) : (
               filteredItems.map((item) => {
@@ -470,22 +460,20 @@ export function SupplierPortal({
                 return (
                   <div
                     key={item.id}
-                    className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-black/[0.015] transition"
+                    className="p-2.5 flex items-center justify-between gap-2 hover:bg-black/[0.015] transition"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Tag className="w-4 h-4 text-[#8E8E93] shrink-0" />
-                      <div>
-                        <div className="font-bold text-[#1C1C1E] text-sm truncate">
-                          {item.name}
-                        </div>
-                        <div className="text-[11px] text-[#8E8E93]">
-                          Đơn vị tính: {item.unit}
-                        </div>
+                    {/* Item Info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-[#1C1C1E] text-xs truncate">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] text-[#8E8E93]">
+                        ĐVT: {item.unit}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0">
-                      {/* iOS Toggle Switch */}
+                    {/* Right: Switch & Price */}
+                    <div className="flex items-center gap-2 shrink-0">
                       <IosSwitch
                         checked={inStock}
                         onChange={(val) =>
@@ -493,8 +481,7 @@ export function SupplierPortal({
                         }
                       />
 
-                      {/* Price Pill */}
-                      <div className="flex items-center bg-[#F2F2F7] rounded-xl px-2.5 py-1 border border-black/5 focus-within:border-[#34C759] focus-within:bg-white shadow-2xs">
+                      <div className="flex items-center bg-[#F2F2F7] rounded-lg px-2 py-1 border border-black/5 focus-within:border-[#34C759] focus-within:bg-white shadow-2xs">
                         <input
                           type="number"
                           step="500"
@@ -506,10 +493,10 @@ export function SupplierPortal({
                               undefined
                             )
                           }
-                          className="w-20 sm:w-24 text-right text-xs font-bold text-[#1C1C1E] focus:outline-none tnum"
+                          className="w-16 text-right text-xs font-bold text-[#1C1C1E] focus:outline-none tnum"
                         />
-                        <span className="text-xs text-[#8E8E93] font-semibold ml-1">
-                          đ/{item.unit}
+                        <span className="text-[10px] text-[#8E8E93] font-semibold ml-0.5">
+                          đ
                         </span>
                       </div>
                     </div>
@@ -525,45 +512,42 @@ export function SupplierPortal({
       {/* TAB 2: RECEIVED ORDERS (ĐƠN HÀNG ĐÃ ĐẶT - CHIA ĐƠN TỪNG BẾP) */}
       {/* ======================================================== */}
       {activeTab === "orders" && (
-        <div className="space-y-4 animate-view">
+        <div className="space-y-3">
           {/* Orders Header Summary */}
-          <div className="ios-card p-4 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-extrabold text-base text-[#1C1C1E]">
-                    Đơn Hàng Cần Giao Ngày {workingDate}
+          <div className="ios-card p-3 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-extrabold text-xs text-[#1C1C1E] truncate">
+                    Đơn Giao Ngày {workingDate}
                   </h3>
                   {isCommittedOrder ? (
-                    <span className="px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D] text-[10px] font-bold">
-                      ✓ Đã chốt đơn
+                    <span className="px-1.5 py-0.2 rounded-full bg-[#34C759]/15 text-[#248A3D] text-[9px] font-bold shrink-0">
+                      ✓ Đã chốt
                     </span>
                   ) : totalSupplierKg > 0 ? (
-                    <span className="px-2 py-0.5 rounded-full bg-[#FF9500]/15 text-[#D97706] text-[10px] font-bold">
-                      Đang lên đơn
+                    <span className="px-1.5 py-0.2 rounded-full bg-[#FF9500]/15 text-[#D97706] text-[9px] font-bold shrink-0">
+                      Đang lên
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-[#8E8E93] mt-0.5">
-                  Nhấn vào từng bếp bên dưới để xem mặt hàng và tích chọn kiểm tra giao hàng
-                </p>
               </div>
 
               {totalSupplierKg > 0 && (
                 <button
                   type="button"
                   onClick={handleCopyPackingList}
-                  className="px-3.5 py-2 rounded-2xl bg-[#34C759] hover:bg-[#28CD41] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1.5 shadow-sm self-start sm:self-auto shrink-0"
+                  className="px-2.5 py-1 rounded-xl bg-[#34C759] hover:bg-[#28CD41] text-white text-[11px] font-bold transition active:scale-95 flex items-center gap-1 shadow-2xs shrink-0"
                 >
                   {copiedPackingList ? (
                     <>
-                      <Check className="w-4 h-4" />
-                      <span>Đã sao chép!</span>
+                      <Check className="w-3 h-3 stroke-[3]" />
+                      <span>Đã chép!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
-                      <span>Sao chép đơn đóng gói</span>
+                      <Copy className="w-3 h-3" />
+                      <span>Chép đóng gói</span>
                     </>
                   )}
                 </button>
@@ -571,66 +555,63 @@ export function SupplierPortal({
             </div>
 
             {/* Metric KPI Widgets for Supplier */}
-            <div className="grid grid-cols-3 gap-2.5 pt-1">
-              <div className="bg-[#F2F2F7] rounded-xl p-3 border border-black/5">
-                <div className="text-[11px] font-semibold text-[#8E8E93] flex items-center gap-1">
-                  <Package className="w-3.5 h-3.5 text-[#34C759]" />
-                  <span>Tổng Khối Lượng</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              <div className="bg-[#F2F2F7] rounded-xl p-2 border border-black/5 text-center">
+                <div className="text-[10px] font-semibold text-[#8E8E93] flex items-center justify-center gap-0.5">
+                  <Package className="w-3 h-3 text-[#34C759]" />
+                  <span>Tổng Kg</span>
                 </div>
-                <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
+                <div className="text-xs font-black text-[#1C1C1E] mt-0.5 tnum">
                   {totalSupplierKg} kg
                 </div>
               </div>
 
-              <div className="bg-[#F2F2F7] rounded-xl p-3 border border-black/5">
-                <div className="text-[11px] font-semibold text-[#8E8E93] flex items-center gap-1">
-                  <Utensils className="w-3.5 h-3.5 text-[#007AFF]" />
-                  <span>Số Bếp Đặt</span>
+              <div className="bg-[#F2F2F7] rounded-xl p-2 border border-black/5 text-center">
+                <div className="text-[10px] font-semibold text-[#8E8E93] flex items-center justify-center gap-0.5">
+                  <Utensils className="w-3 h-3 text-[#007AFF]" />
+                  <span>Số Bếp</span>
                 </div>
-                <div className="text-base sm:text-lg font-extrabold text-[#1C1C1E] mt-1 tnum">
+                <div className="text-xs font-black text-[#1C1C1E] mt-0.5 tnum">
                   {kitchenBlocks.length} bếp
                 </div>
               </div>
 
-              <div className="bg-[#F2F2F7] rounded-xl p-3 border border-black/5">
-                <div className="text-[11px] font-semibold text-[#8E8E93] flex items-center gap-1">
-                  <Truck className="w-3.5 h-3.5 text-[#5856D6]" />
-                  <span>Tổng Giá Trị</span>
+              <div className="bg-[#F2F2F7] rounded-xl p-2 border border-black/5 text-center">
+                <div className="text-[10px] font-semibold text-[#8E8E93] flex items-center justify-center gap-0.5">
+                  <Truck className="w-3 h-3 text-[#5856D6]" />
+                  <span>Giá Trị</span>
                 </div>
-                <div className="text-base sm:text-lg font-extrabold text-[#34C759] mt-1 tnum">
+                <div className="text-xs font-black text-[#34C759] mt-0.5 tnum truncate">
                   {formatVND(totalSupplierCost)}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* List of Kitchen Order Accordions (CLICK VÀO TỪNG BẾP ĐỂ MỞ RA MẶT HÀNG & TÍCH GIAO ĐỦ) */}
-          <div className="space-y-3">
+          {/* List of Kitchen Order Accordions */}
+          <div className="space-y-2">
             {kitchenBlocks.length === 0 ? (
-              <div className="ios-card p-12 text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-[#F2F2F7] text-[#8E8E93] flex items-center justify-center mx-auto text-xl">
-                  🛒
-                </div>
-                <h4 className="font-bold text-sm text-[#1C1C1E]">
-                  Chưa có đơn hàng nào cho ngày {workingDate}
+              <div className="ios-card p-8 text-center space-y-2">
+                <div className="text-2xl">🛒</div>
+                <h4 className="font-bold text-xs text-[#1C1C1E]">
+                  Chưa có đơn hàng nào
                 </h4>
-                <p className="text-xs text-[#8E8E93] max-w-sm mx-auto">
-                  Khi người mua lên đơn hàng và chọn các mặt hàng của bạn, danh sách đơn hàng chia theo từng bếp sẽ xuất hiện tại đây ngay lập tức.
+                <p className="text-[11px] text-[#8E8E93]">
+                  Đơn đặt của các bếp sẽ hiển thị tại đây khi bên mua tiến hành đặt hàng.
                 </p>
               </div>
             ) : (
               kitchenBlocks.map((kb, kIdx) => {
-                // By default: first kitchen is expanded, or if user toggled
                 const isExpanded =
                   expandedKitchens[kb.kitchenId] !== undefined
                     ? expandedKitchens[kb.kitchenId]
                     : kIdx === 0;
 
-                // Calculate delivery progress for this kitchen
                 const deliveredCount = kb.items.filter(
                   (it) => deliveredMap[`${kb.kitchenId}_${it.itemId}`]
                 ).length;
-                const isAllDelivered = deliveredCount === kb.items.length && kb.items.length > 0;
+                const isAllDelivered =
+                  deliveredCount === kb.items.length && kb.items.length > 0;
                 const hasPartial = deliveredCount > 0 && !isAllDelivered;
 
                 return (
@@ -638,41 +619,40 @@ export function SupplierPortal({
                     key={kb.kitchenId}
                     className="ios-card overflow-hidden transition-all duration-200"
                   >
-                    {/* Clickable Kitchen Header (Accordion Trigger) */}
+                    {/* Clickable Kitchen Header */}
                     <button
                       type="button"
                       onClick={() => toggleKitchenExpand(kb.kitchenId)}
-                      className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-black/[0.015] active:bg-black/[0.03] transition select-none cursor-pointer"
+                      className="w-full p-3 flex items-center justify-between gap-2 text-left hover:bg-black/[0.015] active:bg-black/[0.03] transition select-none cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
                         <span
-                          className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs"
                           style={{ backgroundColor: kb.kitchenColor }}
                         />
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="font-extrabold text-sm sm:text-base text-[#1C1C1E]">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-extrabold text-xs text-[#1C1C1E] truncate">
                               {kb.kitchenName.toUpperCase()}
                             </h4>
 
-                            {/* Delivery Status Badge */}
                             {isAllDelivered ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#34C759]/15 text-[#248A3D]">
-                                <Check className="w-3 h-3 stroke-[3]" />
-                                <span>Đã giao đủ ({deliveredCount}/{kb.items.length})</span>
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#34C759]/15 text-[#248A3D] shrink-0">
+                                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                <span>Đủ ({deliveredCount}/{kb.items.length})</span>
                               </span>
                             ) : hasPartial ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FF9500]/15 text-[#D97706]">
-                                <span>Đã giao {deliveredCount}/{kb.items.length} món</span>
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#FF9500]/15 text-[#D97706] shrink-0">
+                                <span>{deliveredCount}/{kb.items.length}</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#767680]/12 text-[#8E8E93]">
-                                <span>Chưa giao (0/{kb.items.length})</span>
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#767680]/12 text-[#8E8E93] shrink-0">
+                                <span>0/{kb.items.length}</span>
                               </span>
                             )}
                           </div>
 
-                          <div className="text-xs text-[#8E8E93] mt-0.5 flex flex-wrap items-center gap-x-2">
+                          <div className="text-[10px] text-[#8E8E93] mt-0.5 flex items-center gap-1.5">
                             <span className="font-semibold text-[#1C1C1E] tnum">
                               {kb.items.length} món · {kb.totalKg} kg
                             </span>
@@ -680,60 +660,43 @@ export function SupplierPortal({
                             <span className="font-bold text-[#34C759] tnum">
                               {formatVND(kb.totalCost)}
                             </span>
-                            {kb.kitchenNote && (
-                              <>
-                                <span className="hidden sm:inline">•</span>
-                                <span className="hidden sm:inline truncate max-w-xs">
-                                  {kb.kitchenNote}
-                                </span>
-                              </>
-                            )}
                           </div>
                         </div>
                       </div>
 
                       {/* Expand / Collapse Chevron */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-semibold text-[#8E8E93] hidden sm:inline">
-                          {isExpanded ? "Thu gọn" : "Xem mặt hàng"}
-                        </span>
-                        <div className="w-7 h-7 rounded-full bg-[#767680]/12 flex items-center justify-center text-[#1C1C1E]">
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </div>
+                      <div className="w-6 h-6 rounded-full bg-[#767680]/10 flex items-center justify-center text-[#1C1C1E] shrink-0">
+                        {isExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
                       </div>
                     </button>
 
                     {/* Expandable Kitchen Content */}
                     {isExpanded && (
-                      <div className="border-t border-[#3C3C43]/10 bg-gradient-to-b from-white to-[#F2F2F7]/30">
-                        {/* Kitchen Address / Note Bar & Quick Action */}
-                        <div className="p-3 sm:px-4 bg-[#F2F2F7]/60 border-b border-[#3C3C43]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                          <div className="text-[#8E8E93]">
-                            📍 Địa chỉ/Ghi chú:{" "}
-                            <span className="font-semibold text-[#1C1C1E]">
-                              {kb.kitchenNote || "Không có ghi chú"}
-                            </span>
-                          </div>
+                      <div className="border-t border-[#3C3C43]/10 bg-[#F9F9F9]/40">
+                        {/* 1-Click Action Bar */}
+                        <div className="p-2 px-3 bg-[#F2F2F7]/60 border-b border-[#3C3C43]/10 flex items-center justify-between gap-2 text-[10px]">
+                          <span className="text-[#8E8E93] truncate">
+                            {kb.kitchenNote ? `📍 ${kb.kitchenNote}` : "Từng món giao:"}
+                          </span>
 
-                          {/* Quick 1-click button to check/uncheck all for this kitchen */}
                           <button
                             type="button"
-                            onClick={() => toggleAllKitchenDelivered(kb.kitchenId, kb.items)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 flex items-center gap-1.5 self-start sm:self-auto ${
+                            onClick={() =>
+                              toggleAllKitchenDelivered(kb.kitchenId, kb.items)
+                            }
+                            className={`px-2 py-1 rounded-full text-[10px] font-bold transition active:scale-95 flex items-center gap-1 shrink-0 ${
                               isAllDelivered
                                 ? "bg-[#767680]/15 text-[#1C1C1E]"
-                                : "bg-[#34C759]/15 text-[#248A3D] hover:bg-[#34C759]/25"
+                                : "bg-[#34C759]/15 text-[#248A3D]"
                             }`}
                           >
-                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <Check className="w-2.5 h-2.5 stroke-[2.5]" />
                             <span>
-                              {isAllDelivered
-                                ? "Bỏ tích giao đủ bếp này"
-                                : `Tích giao đủ toàn bộ ${kb.kitchenName}`}
+                              {isAllDelivered ? "Bỏ tích tất cả" : "Giao đủ tất cả"}
                             </span>
                           </button>
                         </div>
@@ -741,93 +704,59 @@ export function SupplierPortal({
                         {/* List of Items with Delivery Checkboxes */}
                         <div className="divide-y divide-[#3C3C43]/10 text-xs">
                           {kb.items.map((it, idx) => {
-                            const isDelivered = !!deliveredMap[`${kb.kitchenId}_${it.itemId}`];
+                            const isDelivered =
+                              !!deliveredMap[`${kb.kitchenId}_${it.itemId}`];
 
                             return (
                               <div
                                 key={idx}
-                                className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
-                                  isDelivered ? "bg-[#34C759]/[0.05]" : "hover:bg-black/[0.015]"
+                                className={`p-2.5 flex items-center justify-between gap-2 transition ${
+                                  isDelivered
+                                    ? "bg-[#34C759]/[0.05]"
+                                    : "hover:bg-black/[0.015]"
                                 }`}
                               >
                                 {/* Item Details */}
-                                <div className="flex items-start sm:items-center gap-3 min-w-0">
-                                  <span className="w-5 h-5 rounded-full bg-[#767680]/12 text-[#1C1C1E] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                                    {idx + 1}
-                                  </span>
-
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span
-                                        className={`font-bold text-sm truncate ${
-                                          isDelivered
-                                            ? "text-[#1C1C1E]"
-                                            : "text-[#1C1C1E]"
-                                        }`}
-                                      >
-                                        {it.itemName}
-                                      </span>
-                                      <span className="text-[11px] text-[#8E8E93] font-mono bg-[#767680]/10 px-1.5 py-0.2 rounded shrink-0">
-                                        /{it.unit}
-                                      </span>
-                                    </div>
-                                    <div className="text-[11px] text-[#8E8E93] mt-0.5">
-                                      Đơn giá: {formatVND(it.unitPrice)} • Thành tiền:{" "}
-                                      <strong className="text-[#34C759] font-bold">
-                                        {formatVND(it.totalPrice)}
-                                      </strong>
-                                    </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-xs text-[#1C1C1E] truncate">
+                                      {it.itemName}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-[#8E8E93]">
+                                    {formatVND(it.unitPrice)}/{it.unit} •{" "}
+                                    <strong className="text-[#34C759] font-bold">
+                                      {formatVND(it.totalPrice)}
+                                    </strong>
                                   </div>
                                 </div>
 
-                                {/* Right: Quantity & Interactive Delivery Checklist Button */}
-                                <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0 pl-8 sm:pl-0">
-                                  <div className="text-left sm:text-right">
-                                    <div className="text-sm font-extrabold text-[#1C1C1E] tnum">
-                                      {it.qty} {it.unit}
-                                    </div>
-                                  </div>
+                                {/* Right: Quantity & Checklist Button */}
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-xs font-black text-[#1C1C1E] tnum">
+                                    {it.qty} {it.unit}
+                                  </span>
 
-                                  {/* TÍCH CHỌN ĐÃ GIAO ĐỦ / CHƯA GIAO */}
                                   <button
                                     type="button"
-                                    onClick={() => toggleDelivered(kb.kitchenId, it.itemId)}
-                                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-150 flex items-center gap-2 active:scale-95 cursor-pointer shadow-2xs select-none ${
+                                    onClick={() =>
+                                      toggleDelivered(kb.kitchenId, it.itemId)
+                                    }
+                                    className={`px-2 py-1 rounded-lg border text-[10px] font-bold transition-all duration-150 flex items-center gap-1 active:scale-95 cursor-pointer shadow-2xs select-none ${
                                       isDelivered
                                         ? "bg-[#34C759] border-[#34C759] text-white"
-                                        : "bg-white border-[#3C3C43]/20 text-[#1C1C1E] hover:border-[#34C759]"
+                                        : "bg-white border-[#3C3C43]/20 text-[#8E8E93]"
                                     }`}
-                                    title="Chạm để đánh dấu đã giao đủ hay chưa"
                                   >
-                                    <div
-                                      className={`w-4 h-4 rounded-md flex items-center justify-center transition ${
-                                        isDelivered
-                                          ? "bg-white text-[#34C759]"
-                                          : "border border-[#8E8E93] bg-[#F2F2F7]"
-                                      }`}
-                                    >
-                                      {isDelivered && (
-                                        <Check className="w-3 h-3 stroke-[3]" />
-                                      )}
-                                    </div>
+                                    <Check className="w-3 h-3 stroke-[3]" />
                                     <span>
-                                      {isDelivered ? "Đã giao đủ" : "Chưa giao"}
+                                      {isDelivered ? "Đã giao" : "Chưa"}
                                     </span>
                                   </button>
                                 </div>
                               </div>
                             );
                           })}
-                        </div>
-
-                        {/* Kitchen Subtotal Footer */}
-                        <div className="p-3.5 bg-[#F2F2F7]/50 border-t border-[#3C3C43]/10 flex items-center justify-between text-xs text-[#8E8E93]">
-                          <span>
-                            Đóng gói riêng cho <strong>{kb.kitchenName}</strong>
-                          </span>
-                          <span className="font-extrabold text-[#1C1C1E]">
-                            Tổng {kb.kitchenName}: {kb.totalKg} kg ({formatVND(kb.totalCost)})
-                          </span>
                         </div>
                       </div>
                     )}

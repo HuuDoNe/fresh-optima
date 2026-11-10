@@ -46,8 +46,10 @@ export default function RootLayout({
       lang="vi"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#F2F2F7] text-[#1C1C1E] selection:bg-[#34C759] selection:text-white pb-[max(env(safe-area-inset-bottom),76px)]">
-        {children}
+      <body className="min-h-full flex flex-col bg-[#E5E5EA] sm:bg-[#E5E5EA] text-[#1C1C1E] selection:bg-[#34C759] selection:text-white pb-[max(env(safe-area-inset-bottom),76px)]">
+        <div className="w-full max-w-md mx-auto min-h-screen bg-[#F2F2F7] relative sm:shadow-[0_0_50px_rgba(0,0,0,0.12)] sm:border-x sm:border-[#3C3C43]/10 flex flex-col">
+          {children}
+        </div>
       </body>
     </html>
   );

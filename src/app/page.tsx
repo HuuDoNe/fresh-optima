@@ -571,23 +571,23 @@ export default function FreshOptimaApp() {
 
   return (
     <>
-      {/* Toast Notification Container */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+      {/* iOS Capsule Toast Notification */}
+      <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-1.5 pointer-events-none w-[90%] max-w-xs items-center">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium flex items-center gap-2 animate-view ${
+            className={`pointer-events-auto px-3.5 py-1.5 rounded-full shadow-lg text-xs font-semibold flex items-center gap-2 animate-view select-none ${
               t.type === "warn"
-                ? "bg-amber-600 text-white"
-                : "bg-zinc-900 text-white"
+                ? "bg-[#FF9500] text-white shadow-[#FF9500]/25"
+                : "bg-[#1C1C1E]/95 backdrop-blur-md text-white border border-white/10 shadow-black/25"
             }`}
           >
             {t.type === "warn" ? (
-              <AlertCircle className="w-4 h-4 text-amber-200" />
+              <AlertCircle className="w-3.5 h-3.5 text-amber-200 shrink-0" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#34C759] shrink-0" />
             )}
-            <span>{t.message}</span>
+            <span className="truncate">{t.message}</span>
           </div>
         ))}
       </div>
@@ -609,7 +609,7 @@ export default function FreshOptimaApp() {
       />
 
       {/* Main Workspace */}
-      <main className="flex-grow max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-grow w-full px-3 py-3">
         {loading ? (
           <div className="py-24 text-center space-y-2">
             <div className="inline-block w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />

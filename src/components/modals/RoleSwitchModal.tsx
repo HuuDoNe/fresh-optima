@@ -39,7 +39,7 @@ export function RoleSwitchModal({
       }}
     >
       <div
-        className="bg-white rounded-t-[28px] sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 border border-black/5 shadow-2xl animate-view flex flex-col max-h-[90vh]"
+        className="bg-white rounded-t-[28px] sm:rounded-3xl max-w-md w-full p-4 sm:p-5 border border-black/5 shadow-2xl animate-view flex flex-col max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* iOS Drag Handle on Mobile */}

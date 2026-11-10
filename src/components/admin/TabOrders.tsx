@@ -17,6 +17,7 @@ import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
+  ShoppingBag,
 } from "lucide-react";
 
 interface TabOrdersProps {
@@ -40,7 +41,6 @@ interface TabOrdersProps {
 }
 
 export function TabOrders({
-  workingDate,
   kitchens,
   items,
   suppliers,
@@ -87,14 +87,10 @@ export function TabOrders({
 
   // Calculate totals across all kitchens
   let totalAllKg = 0;
-  let totalAllItemsCount = 0;
   Object.values(kitchenOrders).forEach((ko) => {
     Object.values(ko).forEach((val) => {
       const n = parseFloat(String(val)) || 0;
-      if (n > 0) {
-        totalAllKg += n;
-        totalAllItemsCount++;
-      }
+      if (n > 0) totalAllKg += n;
     });
   });
 
@@ -130,46 +126,42 @@ export function TabOrders({
   };
 
   return (
-    <section className="animate-view space-y-4 pb-28 max-w-full overflow-x-hidden">
-      {/* iOS Segmented Kitchen Selector */}
-      <div className="ios-card p-4 space-y-3.5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-extrabold text-[#1C1C1E] tracking-tight">
+    <section className="animate-view space-y-3 pb-24 max-w-full">
+      {/* 1. Kitchens Segmented Control Card */}
+      <div className="ios-card p-3 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <ShoppingBag className="w-4 h-4 text-[#007AFF]" />
+            <h2 className="text-sm font-extrabold text-[#1C1C1E] tracking-tight">
               {lockedKitchenId ? `Đặt Hàng - ${activeKitchen.name}` : "Đặt Hàng Từng Bếp"}
             </h2>
-            <p className="text-xs text-[#8E8E93] mt-0.5">
-              {lockedKitchenId
-                ? `Nhập số lượng thực phẩm đặt cho ${activeKitchen.name}`
-                : "Chọn bếp để lên số lượng riêng biệt, không gộp chung"}
-            </p>
           </div>
 
           {!lockedKitchenId && (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={onFillSampleOrders}
-                className="px-2.5 py-1.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-xs font-semibold transition active:scale-95 flex items-center gap-1"
+                className="px-2 py-1 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-[11px] font-semibold transition active:scale-95 flex items-center gap-1"
                 title="Điền mẫu"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#FF9500]" />
-                <span className="hidden sm:inline">Điền mẫu</span>
+                <Sparkles className="w-3 h-3 text-[#FF9500]" />
+                <span>Mẫu</span>
               </button>
               <button
                 type="button"
                 onClick={() => onOpenKitchenModal(null)}
-                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-[#34C759] hover:bg-[#28CD41] text-white text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-xs"
+                className="p-1 px-2 rounded-full bg-[#34C759] hover:bg-[#28CD41] text-white text-[11px] font-bold transition active:scale-95 flex items-center gap-0.5 shadow-2xs"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Thêm Bếp</span>
+                <Plus className="w-3 h-3" />
+                <span>Bếp</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Cupertino Segmented Tabs for Kitchens */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
+        {/* Kitchens Horizontal Scroll Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar -mx-1 px-1">
           {displayedKitchens.map((k) => {
             const isSelected = k.id === activeKitchen.id;
             const ko = kitchenOrders[k.id] || {};
@@ -188,19 +180,19 @@ export function TabOrders({
                 key={k.id}
                 type="button"
                 onClick={() => onSelectKitchen(k.id)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all duration-150 flex items-center gap-2 shrink-0 active:scale-95 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 shrink-0 active:scale-95 select-none ${
                   isSelected
-                    ? "bg-[#1C1C1E] text-white shadow-sm"
+                    ? "bg-[#1C1C1E] text-white shadow-xs"
                     : "bg-[#767680]/12 text-[#1C1C1E] hover:bg-[#767680]/20"
                 }`}
               >
                 <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: k.color }}
                 />
                 <span>{k.name}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full tnum ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full tnum ${
                     isSelected ? "bg-white/20 text-white" : "bg-black/5 text-[#8E8E93]"
                   }`}
                 >
@@ -212,46 +204,29 @@ export function TabOrders({
         </div>
       </div>
 
-      {/* Item Order List for Selected Kitchen */}
-      <div className="space-y-3">
-        {/* Controls: Active Kitchen title, search, and filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
-          <div className="flex items-center gap-2">
+      {/* 2. Controls: Search, Filter, and Current Kitchen Stats */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="w-3 h-3 rounded-full shrink-0"
+              className="w-2 h-2 rounded-full shrink-0"
               style={{ backgroundColor: activeKitchen.color }}
             />
-            <h3 className="font-extrabold text-sm text-[#1C1C1E]">
+            <span className="font-extrabold text-xs text-[#1C1C1E] truncate">
               {activeKitchen.name}
-            </h3>
-            {activeKitchen.note && (
-              <span className="text-xs text-[#8E8E93] truncate max-w-[140px]">
-                ({activeKitchen.note})
-              </span>
-            )}
-            <span className="text-xs text-[#248A3D] font-bold bg-[#34C759]/15 px-2 py-0.5 rounded-full ml-1">
+            </span>
+            <span className="text-[11px] text-[#248A3D] font-bold bg-[#34C759]/15 px-2 py-0.2 rounded-full shrink-0">
               {curKitchenItemsCount} món · {curKitchenKg}kg
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-44">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8E8E93]" />
-              <input
-                type="text"
-                value={itemSearch}
-                onChange={(e) => setItemSearch(e.target.value)}
-                placeholder="Tìm món..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#3C3C43]/15 rounded-full focus:outline-none focus:border-[#34C759] shadow-2xs"
-              />
-            </div>
-
-            {/* iOS Filter Pill */}
-            <div className="flex items-center bg-[#767680]/12 p-0.5 rounded-full text-xs">
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Filter Pill */}
+            <div className="flex items-center bg-[#767680]/12 p-0.5 rounded-full text-[11px]">
               <button
                 type="button"
                 onClick={() => setFilterMode("all")}
-                className={`px-2.5 py-1 rounded-full transition ${
+                className={`px-2 py-0.5 rounded-full transition ${
                   filterMode === "all"
                     ? "bg-white text-[#1C1C1E] font-bold shadow-2xs"
                     : "text-[#8E8E93]"
@@ -262,7 +237,7 @@ export function TabOrders({
               <button
                 type="button"
                 onClick={() => setFilterMode("ordered")}
-                className={`px-2.5 py-1 rounded-full transition ${
+                className={`px-2 py-0.5 rounded-full transition ${
                   filterMode === "ordered"
                     ? "bg-white text-[#1C1C1E] font-bold shadow-2xs"
                     : "text-[#8E8E93]"
@@ -275,18 +250,30 @@ export function TabOrders({
             <button
               type="button"
               onClick={onClearCurrentKitchenOrder}
-              className="p-1.5 rounded-full bg-white border border-[#3C3C43]/15 text-[#8E8E93] hover:text-[#FF3B30] transition"
-              title="Xóa hết đơn bếp này"
+              className="p-1 rounded-full bg-white border border-[#3C3C43]/15 text-[#8E8E93] hover:text-[#FF3B30] transition shrink-0"
+              title="Xóa đơn bếp này"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3 h-3" />
             </button>
           </div>
         </div>
 
-        {/* Product Items: iOS Inset Grouped Rows */}
-        <div className="ios-card overflow-hidden divide-y divide-[#3C3C43]/10">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#8E8E93]" />
+          <input
+            type="text"
+            value={itemSearch}
+            onChange={(e) => setItemSearch(e.target.value)}
+            placeholder="Tìm mặt hàng để nhập số lượng..."
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#3C3C43]/15 rounded-full focus:outline-none focus:border-[#34C759] shadow-2xs"
+          />
+        </div>
+
+        {/* 3. Product Items: Inset Grouped Rows with Stepper */}
+        <div className="ios-card overflow-hidden divide-y divide-[#3C3C43]/8">
           {!filteredItems.length ? (
-            <div className="py-12 text-center text-xs text-[#8E8E93]">
+            <div className="py-8 text-center text-xs text-[#8E8E93]">
               Không có mặt hàng nào phù hợp bộ lọc.
             </div>
           ) : (
@@ -309,67 +296,67 @@ export function TabOrders({
               return (
                 <div
                   key={item.id}
-                  className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
-                    hasQty ? "bg-[#34C759]/[0.04]" : "hover:bg-black/[0.015]"
+                  className={`px-3.5 py-2.5 flex items-center justify-between gap-2 transition ${
+                    hasQty ? "bg-[#34C759]/[0.05]" : "hover:bg-black/[0.015]"
                   }`}
                 >
                   {/* Left: Item Info */}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#1C1C1E] text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-[#1C1C1E] text-xs sm:text-sm truncate">
                         {item.name}
                       </span>
-                      <span className="text-[11px] text-[#8E8E93] font-mono bg-[#767680]/10 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] text-[#8E8E93] font-mono bg-[#767680]/10 px-1.5 py-0.2 rounded-full shrink-0">
                         /{item.unit}
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-[#8E8E93] mt-1 flex items-center gap-2">
+                    <div className="text-[10px] text-[#8E8E93] mt-0.5 truncate">
                       {bestSupName ? (
                         <span>
-                          Dự kiến:{" "}
+                          Rẻ nhất:{" "}
                           <strong className="text-[#34C759] font-bold">
                             {formatVND(minPrice)}
                           </strong>{" "}
                           ({bestSupName})
                         </span>
                       ) : (
-                        <span className="text-[#FF3B30]">Hết hàng</span>
+                        <span className="text-[#FF3B30] font-semibold">Tạm hết hàng</span>
                       )}
                     </div>
                   </div>
 
                   {/* Right: iOS Stepper Controls */}
-                  <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     {/* Quick Presets */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5">
                       <button
                         type="button"
                         onClick={() => onUpdateKitchenQty(item.id, qty + 5)}
-                        className="px-2 py-1 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-[11px] font-bold transition active:scale-95"
+                        className="px-1.5 py-0.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-[10px] font-bold transition active:scale-95"
                       >
                         +5
                       </button>
                       <button
                         type="button"
                         onClick={() => onUpdateKitchenQty(item.id, qty + 10)}
-                        className="px-2 py-1 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-[11px] font-bold transition active:scale-95"
+                        className="px-1.5 py-0.5 rounded-full bg-[#767680]/10 hover:bg-[#767680]/15 text-[#1C1C1E] text-[10px] font-bold transition active:scale-95"
                       >
                         +10
                       </button>
                     </div>
 
-                    {/* Authentic iOS Stepper */}
+                    {/* Stepper Input */}
                     <div className="flex items-center bg-[#F2F2F7] rounded-xl border border-black/5 p-0.5 shadow-2xs">
                       <button
                         type="button"
                         onClick={() =>
                           onUpdateKitchenQty(item.id, Math.max(0, qty - 1))
                         }
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[#1C1C1E] hover:bg-white active:scale-90 transition font-bold"
-                        title="Giảm 1kg"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[#1C1C1E] hover:bg-white active:scale-90 transition font-bold"
+                        title="Giảm 1"
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <Minus className="w-3 h-3" />
                       </button>
 
                       <input
@@ -384,20 +371,20 @@ export function TabOrders({
                           )
                         }
                         placeholder="0"
-                        className="w-12 h-8 text-center text-xs font-bold text-[#1C1C1E] focus:outline-none tnum bg-transparent"
+                        className="w-10 h-7 text-center text-xs font-bold text-[#1C1C1E] focus:outline-none tnum bg-transparent"
                       />
 
                       <button
                         type="button"
                         onClick={() => onUpdateKitchenQty(item.id, qty + 1)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[#1C1C1E] hover:bg-white active:scale-90 transition font-bold"
-                        title="Tăng 1kg"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[#1C1C1E] hover:bg-white active:scale-90 transition font-bold"
+                        title="Tăng 1"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
 
-                    <span className="text-xs text-[#8E8E93] font-medium w-6">
+                    <span className="text-[11px] text-[#8E8E93] font-medium w-4">
                       {item.unit}
                     </span>
                   </div>
@@ -408,32 +395,32 @@ export function TabOrders({
         </div>
       </div>
 
-      {/* iOS Floating Action Button (Step 2 -> Step 3) */}
-      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* 4. Bottom Action Buttons: Step 2 -> Step 3 */}
+      <div className="pt-1 flex items-center gap-2">
         <button
           type="button"
           onClick={onBackToQuotes}
-          className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-white border border-[#3C3C43]/15 hover:bg-[#F2F2F7] text-[#1C1C1E] text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-98"
+          className="px-3 py-3 rounded-2xl bg-white border border-[#3C3C43]/15 hover:bg-[#F2F2F7] text-[#1C1C1E] text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs active:scale-98 shrink-0"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Xem Báo Giá (B1)</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>B1</span>
         </button>
 
         <button
           type="button"
-          disabled={committing || totalAllKg <= 0}
+          disabled={committing || (lockedKitchenId ? curKitchenKg <= 0 : totalAllKg <= 0)}
           onClick={handleCommitAndProceed}
-          className={`w-full sm:flex-1 py-3.5 px-5 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(52,199,89,0.35)] active:scale-98 ${
-            totalAllKg > 0
+          className={`flex-1 py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-[0_4px_16px_rgba(52,199,89,0.3)] active:scale-98 select-none ${
+            (lockedKitchenId ? curKitchenKg > 0 : totalAllKg > 0)
               ? "bg-[#34C759] hover:bg-[#28CD41] text-white cursor-pointer"
               : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed shadow-none"
           }`}
         >
           {committing ? (
-            <span>Đang tối ưu phân bổ...</span>
+            <span>Đang chốt đơn...</span>
           ) : (
             <>
-              <span>Chốt Đơn (Tạo Phiếu Zalo Bước 3)</span>
+              <span>Chốt Đơn (Tạo Phiếu Zalo)</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
