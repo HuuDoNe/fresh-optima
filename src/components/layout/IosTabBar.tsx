@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { ShoppingBag, BarChart3 } from "lucide-react";
+import { ShoppingBag, Beef, BarChart3 } from "lucide-react";
 import { MainTab } from "./Header";
 
 interface IosTabBarProps {
   activeTab: MainTab;
   onTabChange: (tab: MainTab) => void;
   orderCount?: number;
+  meatCount?: number;
   isKitchen?: boolean;
 }
 
@@ -15,6 +16,7 @@ export function IosTabBar({
   activeTab,
   onTabChange,
   orderCount = 0,
+  meatCount = 0,
   isKitchen = false,
 }: IosTabBarProps) {
   const allTabs = [
@@ -23,6 +25,12 @@ export function IosTabBar({
       label: "Đơn Rau",
       icon: ShoppingBag,
       badge: orderCount > 0 ? orderCount : null,
+    },
+    {
+      id: "meat" as MainTab,
+      label: "Đơn Thịt",
+      icon: Beef,
+      badge: meatCount > 0 ? meatCount : null,
     },
     {
       id: "reports" as MainTab,
@@ -34,11 +42,15 @@ export function IosTabBar({
   const tabs = isKitchen ? allTabs.filter((t) => t.id !== "reports") : allTabs;
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-[#F9F9F9]/95 backdrop-blur-2xl border-t border-[#3C3C43]/15 pb-[max(env(safe-area-inset-bottom),10px)] pt-1.5 px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] sm:border-x sm:border-[#3C3C43]/10">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-[#F9F9F9]/95 backdrop-blur-2xl border-t border-[#3C3C43]/15 pb-[max(env(safe-area-inset-bottom),10px)] pt-1.5 px-3 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] sm:border-x sm:border-[#3C3C43]/10">
       <div
         className={`w-full grid ${
-          tabs.length === 1 ? "grid-cols-1" : "grid-cols-2"
-        } gap-3`}
+          tabs.length === 1
+            ? "grid-cols-1"
+            : tabs.length === 2
+            ? "grid-cols-2"
+            : "grid-cols-3"
+        } gap-1`}
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -66,7 +78,7 @@ export function IosTabBar({
                 )}
               </div>
               <span
-                className={`text-[11px] font-semibold tracking-tight mt-0.5 transition-colors duration-150 ${
+                className={`text-[10px] sm:text-[11px] font-semibold tracking-tight mt-0.5 transition-colors duration-150 ${
                   isActive
                     ? "text-[#34C759] font-bold"
                     : "text-[#8E8E93]"

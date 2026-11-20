@@ -33,6 +33,7 @@ import { TabQuotes } from "@/components/admin/TabQuotes";
 import { TabOrders } from "@/components/admin/TabOrders";
 import { TabPO } from "@/components/admin/TabPO";
 import { TabReports } from "@/components/admin/TabReports";
+import { TabMeatOrder } from "@/components/meat/TabMeatOrder";
 import { RoleSwitchModal } from "@/components/modals/RoleSwitchModal";
 import { SupplierModal } from "@/components/modals/SupplierModal";
 import { SupplierSelfModal } from "@/components/modals/SupplierSelfModal";
@@ -828,7 +829,17 @@ export default function FreshOptimaApp() {
               </div>
             )}
 
-            {/* TAB 2: BÁO CÁO CHI PHÍ */}
+            {/* TAB 2: ĐƠN THỊT (Gồm 3 Bước: 1. Xem Ảnh Đơn -> 2. Soạn Hàng -> 3. Báo Cáo) */}
+            {activeMainTab === "meat" && (
+              <TabMeatOrder
+                workingDate={workingDate}
+                kitchens={kitchens}
+                session={session}
+                onNotify={notify}
+              />
+            )}
+
+            {/* TAB 3: BÁO CÁO CHI PHÍ */}
             {activeMainTab === "reports" && session.role !== "kitchen" && (
               <TabReports
                 workingDate={workingDate}
@@ -848,7 +859,7 @@ export default function FreshOptimaApp() {
         )}
       </main>
 
-      {/* iOS Cupertino Bottom Tab Bar: ONLY 2 TABS ("Đơn Rau" & "Báo Cáo") */}
+      {/* iOS Cupertino Bottom Tab Bar: 3 TABS ("Đơn Rau", "Đơn Thịt", "Báo Cáo") */}
       {(session.role === "admin" || session.role === "kitchen") && (
         <IosTabBar
           activeTab={activeMainTab}

@@ -5,7 +5,7 @@ import { SupplierData, KitchenData, SessionState, UserRole } from "@/lib/types";
 import { Calendar, Shield, UtensilsCrossed } from "lucide-react";
 import { PwaInstallButton } from "@/components/common/PwaInstallButton";
 
-export type MainTab = "orders" | "reports";
+export type MainTab = "orders" | "meat" | "reports";
 export type OrderStep = "quotes" | "orders" | "po";
 export type AdminTab = MainTab;
 
