@@ -26,7 +26,7 @@ import {
   commitOrderBatchAction,
   deleteHistoryDayAction,
 } from "@/actions/app-actions";
-import { Header, AdminTab } from "@/components/layout/Header";
+import { Header, MainTab, OrderStep } from "@/components/layout/Header";
 import { IosTabBar } from "@/components/layout/IosTabBar";
 import { SupplierPortal } from "@/components/supplier/SupplierPortal";
 import { TabQuotes } from "@/components/admin/TabQuotes";
@@ -69,7 +69,8 @@ export default function FreshOptimaApp() {
     supplierId: null,
     kitchenId: null,
   });
-  const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>("quotes");
+  const [activeMainTab, setActiveMainTab] = useState<MainTab>("orders");
+  const [orderStep, setOrderStep] = useState<OrderStep>("quotes");
 
   // Data from DB
   const [suppliers, setSuppliers] = useState<SupplierData[]>([]);
@@ -193,8 +194,8 @@ export default function FreshOptimaApp() {
       if (targetKitchen) {
         setActiveKitchenId(targetKitchen.id);
       }
-      if (activeAdminTab === "reports") {
-        setActiveAdminTab("quotes");
+      if (activeMainTab === "reports") {
+        setActiveMainTab("orders");
       }
       notify(`Đã chuyển sang Cổng Bếp: ${targetKitchen ? targetKitchen.name : ""}`);
     } else {
@@ -370,10 +371,12 @@ export default function FreshOptimaApp() {
       await loadState(workingDate);
       if (session.role === "kitchen") {
         notify(`Đã chốt đơn ngày ${workingDate}!`);
-        setActiveAdminTab("po");
+        setActiveMainTab("orders");
+        setOrderStep("po");
       } else {
-        notify(`Đã chốt đơn các bếp ngày ${workingDate} vào Báo cáo chi phí`);
-        setActiveAdminTab("reports");
+        notify(`Đã chốt đơn các bếp ngày ${workingDate}! Chuyển sang Bước 3: Gửi Zalo`);
+        setActiveMainTab("orders");
+        setOrderStep("po");
       }
     } catch {
       notify("Lỗi chốt đơn", "warn");
@@ -398,7 +401,8 @@ export default function FreshOptimaApp() {
 
       setKitchenOrders(restoredOrders);
     }
-    setActiveAdminTab("orders");
+    setActiveMainTab("orders");
+    setOrderStep("orders");
     notify(`Đã nạp lại đơn hàng ngày ${dateStr} về mục Đặt hàng để chỉnh sửa`);
   };
 
@@ -598,10 +602,10 @@ export default function FreshOptimaApp() {
         suppliers={suppliers}
         kitchens={kitchens}
         workingDate={workingDate}
-        activeAdminTab={activeAdminTab}
+        activeAdminTab={activeMainTab}
         onTabChange={(tab) => {
           if (session.role === "kitchen" && tab === "reports") return;
-          setActiveAdminTab(tab);
+          setActiveMainTab(tab);
         }}
         onDateChange={handleDateChange}
         onOpenRoleModal={() => setRoleModalOpen(true)}
@@ -643,97 +647,197 @@ export default function FreshOptimaApp() {
             </div>
           )
         ) : (
-          /* ADMIN & KITCHEN WORKSPACE (3 or 4 Tabs) */
+          /* ADMIN & KITCHEN WORKSPACE: 2 TABS ("Đơn Rau" & "Báo Cáo") */
           <div>
-            {activeAdminTab === "quotes" && (
-              <TabQuotes
-                workingDate={workingDate}
-                suppliers={suppliers}
-                items={items}
-                dayQuotes={dayQuotes}
-                readOnly={session.role === "kitchen"}
-                onUpdateQuote={handleUpdateQuote}
-                onCopyAllYesterday={handleCopyAllYesterday}
-                onRandomizeMarket={handleRandomizeMarket}
-                onEnterSupplierPortal={(supId) => handleSelectRole("supplier", supId)}
-                onOpenSupplierModal={(sup) => {
-                  setEditingSupplier(sup);
-                  setSupplierModalOpen(true);
-                }}
-                onDeleteSupplier={handleDeleteSupplier}
-                onOpenAddItemModal={() => setItemModalOpen(true)}
-                onDeleteItem={handleDeleteItem}
-                onProceedToOrders={() => {
-                  setActiveAdminTab("orders");
-                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
+            {/* TAB 1: ĐƠN RAU (Gồm 3 Bước: 1. Xem Báo Giá -> 2. Đặt Bếp -> 3. Gửi Zalo) */}
+            {activeMainTab === "orders" && (
+              <div className="space-y-3">
+                {/* Segmented Step Controller for "Đơn Rau" */}
+                <div className="bg-[#767680]/12 p-1 rounded-2xl select-none">
+                  <div className="grid grid-cols-3 gap-1">
+                    {/* Bước 1: Xem Báo Giá */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderStep("quotes");
+                        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 ${
+                        orderStep === "quotes"
+                          ? "bg-white text-[#1C1C1E] shadow-sm"
+                          : "text-[#8E8E93] hover:text-[#1C1C1E]"
+                      }`}
+                    >
+                      <span
+                        className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-black ${
+                          orderStep === "quotes"
+                            ? "bg-[#34C759] text-white"
+                            : "bg-[#8E8E93]/20 text-[#8E8E93]"
+                        }`}
+                      >
+                        1
+                      </span>
+                      <span className="truncate">Xem Báo Giá</span>
+                    </button>
+
+                    {/* Bước 2: Đặt Bếp */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderStep("orders");
+                        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 relative ${
+                        orderStep === "orders"
+                          ? "bg-white text-[#1C1C1E] shadow-sm"
+                          : "text-[#8E8E93] hover:text-[#1C1C1E]"
+                      }`}
+                    >
+                      <span
+                        className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-black ${
+                          orderStep === "orders"
+                            ? "bg-[#34C759] text-white"
+                            : "bg-[#8E8E93]/20 text-[#8E8E93]"
+                        }`}
+                      >
+                        2
+                      </span>
+                      <span className="truncate">Đặt Bếp</span>
+                      {Object.values(
+                        session.role === "kitchen" && (session.kitchenId || activeKitchenId)
+                          ? kitchenOrders[session.kitchenId || activeKitchenId] || {}
+                          : Object.values(kitchenOrders).reduce(
+                              (acc, ko) => ({ ...acc, ...ko }),
+                              {}
+                            )
+                      ).some((v) => parseFloat(String(v)) > 0) && (
+                        <span className="w-2 h-2 rounded-full bg-[#FF3B30] absolute top-1.5 right-1.5 shadow-xs" />
+                      )}
+                    </button>
+
+                    {/* Bước 3: Gửi Zalo */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderStep("po");
+                        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 ${
+                        orderStep === "po"
+                          ? "bg-white text-[#1C1C1E] shadow-sm"
+                          : "text-[#8E8E93] hover:text-[#1C1C1E]"
+                      }`}
+                    >
+                      <span
+                        className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-black ${
+                          orderStep === "po"
+                            ? "bg-[#34C759] text-white"
+                            : "bg-[#8E8E93]/20 text-[#8E8E93]"
+                        }`}
+                      >
+                        3
+                      </span>
+                      <span className="truncate">Gửi Zalo</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-view: Bước 1 - Xem Báo Giá */}
+                {orderStep === "quotes" && (
+                  <TabQuotes
+                    workingDate={workingDate}
+                    suppliers={suppliers}
+                    items={items}
+                    dayQuotes={dayQuotes}
+                    readOnly={session.role === "kitchen"}
+                    onUpdateQuote={handleUpdateQuote}
+                    onCopyAllYesterday={handleCopyAllYesterday}
+                    onRandomizeMarket={handleRandomizeMarket}
+                    onEnterSupplierPortal={(supId) => handleSelectRole("supplier", supId)}
+                    onOpenSupplierModal={(sup) => {
+                      setEditingSupplier(sup);
+                      setSupplierModalOpen(true);
+                    }}
+                    onDeleteSupplier={handleDeleteSupplier}
+                    onOpenAddItemModal={() => setItemModalOpen(true)}
+                    onDeleteItem={handleDeleteItem}
+                    onProceedToOrders={() => {
+                      setOrderStep("orders");
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                )}
+
+                {/* Sub-view: Bước 2 - Đặt Bếp */}
+                {orderStep === "orders" && (
+                  <TabOrders
+                    workingDate={workingDate}
+                    kitchens={kitchens}
+                    items={items}
+                    suppliers={suppliers}
+                    dayQuotes={dayQuotes}
+                    kitchenOrders={kitchenOrders}
+                    activeKitchenId={session.role === "kitchen" && session.kitchenId ? session.kitchenId : activeKitchenId}
+                    lockedKitchenId={session.role === "kitchen" ? (session.kitchenId || activeKitchenId) : null}
+                    onSelectKitchen={(id) => {
+                      if (session.role !== "kitchen") {
+                        setActiveKitchenId(id);
+                      }
+                    }}
+                    onUpdateKitchenQty={handleUpdateKitchenQty}
+                    onClearCurrentKitchenOrder={handleClearCurrentKitchenOrder}
+                    onFillSampleOrders={handleFillSampleOrders}
+                    onOpenKitchenModal={(k) => {
+                      setEditingKitchen(k);
+                      setKitchenModalOpen(true);
+                    }}
+                    onCommitOrders={handleCommitOrders}
+                    onNotify={notify}
+                    onProceedToPo={() => {
+                      setOrderStep("po");
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onBackToQuotes={() => {
+                      setOrderStep("quotes");
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                )}
+
+                {/* Sub-view: Bước 3 - Gửi Zalo */}
+                {orderStep === "po" && (
+                  <TabPO
+                    workingDate={workingDate}
+                    kitchens={kitchens}
+                    items={items}
+                    suppliers={suppliers}
+                    dayQuotes={dayQuotes}
+                    kitchenOrders={kitchenOrders}
+                    lockedKitchenId={session.role === "kitchen" ? (session.kitchenId || activeKitchenId) : null}
+                    onNotify={notify}
+                    onBackToOrders={() => {
+                      setOrderStep("orders");
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onProceedToReports={() => {
+                      setActiveMainTab("reports");
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                )}
+              </div>
             )}
 
-            {activeAdminTab === "orders" && (
-              <TabOrders
-                workingDate={workingDate}
-                kitchens={kitchens}
-                items={items}
-                suppliers={suppliers}
-                dayQuotes={dayQuotes}
-                kitchenOrders={kitchenOrders}
-                activeKitchenId={session.role === "kitchen" && session.kitchenId ? session.kitchenId : activeKitchenId}
-                lockedKitchenId={session.role === "kitchen" ? (session.kitchenId || activeKitchenId) : null}
-                onSelectKitchen={(id) => {
-                  if (session.role !== "kitchen") {
-                    setActiveKitchenId(id);
-                  }
-                }}
-                onUpdateKitchenQty={handleUpdateKitchenQty}
-                onClearCurrentKitchenOrder={handleClearCurrentKitchenOrder}
-                onFillSampleOrders={handleFillSampleOrders}
-                onOpenKitchenModal={(k) => {
-                  setEditingKitchen(k);
-                  setKitchenModalOpen(true);
-                }}
-                onCommitOrders={handleCommitOrders}
-                onNotify={notify}
-                onProceedToPo={() => {
-                  setActiveAdminTab("po");
-                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                onBackToQuotes={() => {
-                  setActiveAdminTab("quotes");
-                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
-            )}
-
-            {activeAdminTab === "po" && (
-              <TabPO
-                workingDate={workingDate}
-                kitchens={kitchens}
-                items={items}
-                suppliers={suppliers}
-                dayQuotes={dayQuotes}
-                kitchenOrders={kitchenOrders}
-                lockedKitchenId={session.role === "kitchen" ? (session.kitchenId || activeKitchenId) : null}
-                onNotify={notify}
-                onBackToOrders={() => {
-                  setActiveAdminTab("orders");
-                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                onProceedToReports={() => {
-                  setActiveAdminTab("reports");
-                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
-            )}
-
-            {activeAdminTab === "reports" && session.role !== "kitchen" && (
+            {/* TAB 2: BÁO CÁO CHI PHÍ */}
+            {activeMainTab === "reports" && session.role !== "kitchen" && (
               <TabReports
                 workingDate={workingDate}
                 suppliers={suppliers}
                 history={history}
                 onReloadDateToOrders={(batch) => {
                   handleReloadDateToOrders(batch);
-                  setActiveAdminTab("orders");
+                  setActiveMainTab("orders");
+                  setOrderStep("orders");
                   if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 onDeleteHistoryDay={handleDeleteHistoryDay}
@@ -744,14 +848,14 @@ export default function FreshOptimaApp() {
         )}
       </main>
 
-      {/* iOS Cupertino Bottom Tab Bar */}
+      {/* iOS Cupertino Bottom Tab Bar: ONLY 2 TABS ("Đơn Rau" & "Báo Cáo") */}
       {(session.role === "admin" || session.role === "kitchen") && (
         <IosTabBar
-          activeTab={activeAdminTab}
+          activeTab={activeMainTab}
           isKitchen={session.role === "kitchen"}
           onTabChange={(tab) => {
             if (session.role === "kitchen" && tab === "reports") return;
-            setActiveAdminTab(tab);
+            setActiveMainTab(tab);
             if (typeof window !== "undefined") {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }

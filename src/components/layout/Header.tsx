@@ -5,15 +5,17 @@ import { SupplierData, KitchenData, SessionState, UserRole } from "@/lib/types";
 import { Calendar, Shield, UtensilsCrossed } from "lucide-react";
 import { PwaInstallButton } from "@/components/common/PwaInstallButton";
 
-export type AdminTab = "quotes" | "orders" | "po" | "reports";
+export type MainTab = "orders" | "reports";
+export type OrderStep = "quotes" | "orders" | "po";
+export type AdminTab = MainTab;
 
 interface HeaderProps {
   session: SessionState;
   suppliers: SupplierData[];
   kitchens?: KitchenData[];
   workingDate: string;
-  activeAdminTab?: AdminTab;
-  onTabChange?: (tab: AdminTab) => void;
+  activeAdminTab?: MainTab;
+  onTabChange?: (tab: MainTab) => void;
   onDateChange: (newDate: string) => void;
   onOpenRoleModal: () => void;
   onQuickRoleChange?: (role: UserRole, id?: string | null) => void;
