@@ -295,6 +295,14 @@ export function TabMeatOrder({
     saveOrders(updated);
   };
 
+  const adjustActualKg = (itemId: string, delta: number) => {
+    const item = currentKitchenOrder.items.find((it) => it.id === itemId);
+    if (!item) return;
+    const current = item.actualKg !== undefined ? item.actualKg : item.orderKg;
+    const next = Math.max(0, Math.round((current + delta) * 10) / 10);
+    updateActualKg(itemId, next);
+  };
+
   const toggleAllKitchenPacked = () => {
     const allPacked = currentKitchenOrder.items.every((it) => it.isPacked);
     const updatedItems = currentKitchenOrder.items.map((it) => ({
@@ -782,80 +790,141 @@ export function TabMeatOrder({
           </div>
 
           {/* List of Meat Items to Pack */}
-          <div className="ios-card overflow-hidden divide-y divide-[#3C3C43]/10">
-            {currentKitchenOrder.items.length === 0 ? (
-              <div className="py-8 text-center text-xs text-[#8E8E93]">
-                Chưa có món thịt nào cho bếp này.
+          <div className="ios-card overflow-hidden">
+            {/* Table Header: Dual quantity columns */}
+            <div className="flex items-center justify-between px-3 py-2 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider bg-[#F2F2F7]/70 border-b border-[#3C3C43]/10">
+              <span className="flex-1">Mặt hàng thịt</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="w-14 text-center">Theo đơn</span>
+                <span className="w-24 text-center">Thực tế (-/+)</span>
+                <span className="w-7 text-center">Soạn</span>
               </div>
-            ) : (
-              currentKitchenOrder.items.map((item, idx) => {
-                const isPacked = item.isPacked;
+            </div>
 
-                return (
-                  <div
-                    key={item.id}
-                    className={`p-2.5 flex items-center justify-between gap-2 transition ${
-                      isPacked ? "bg-[#34C759]/[0.05]" : "hover:bg-black/[0.015]"
-                    }`}
-                  >
-                    {/* Left: Index badge & Name */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs text-[#1C1C1E] truncate">
-                          {item.name}
-                        </span>
-                        <span className="text-[9px] font-bold uppercase px-1 py-0.2 rounded bg-[#767680]/10 text-[#8E8E93] shrink-0">
-                          {item.category}
-                        </span>
+            <div className="divide-y divide-[#3C3C43]/10">
+              {currentKitchenOrder.items.length === 0 ? (
+                <div className="py-8 text-center text-xs text-[#8E8E93]">
+                  Chưa có món thịt nào cho bếp này.
+                </div>
+              ) : (
+                currentKitchenOrder.items.map((item) => {
+                  const isPacked = item.isPacked;
+                  const actualVal =
+                    item.actualKg !== undefined ? item.actualKg : item.orderKg;
+                  const diff = Math.round((actualVal - item.orderKg) * 10) / 10;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-2.5 flex items-center justify-between gap-2 transition ${
+                        isPacked ? "bg-[#34C759]/[0.05]" : "hover:bg-black/[0.015]"
+                      }`}
+                    >
+                      {/* Left: Index badge, Name & Price */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-[#1C1C1E] truncate">
+                            {item.name}
+                          </span>
+                          <span className="text-[9px] font-bold uppercase px-1 py-0.2 rounded bg-[#767680]/10 text-[#8E8E93] shrink-0">
+                            {item.category}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-[#8E8E93] mt-0.5 flex items-center gap-1">
+                          <span>{formatVND(item.unitPrice)}/kg</span>
+                          {diff !== 0 && (
+                            <span
+                              className={`text-[9px] font-bold px-1 rounded ${
+                                diff > 0
+                                  ? "bg-[#007AFF]/12 text-[#007AFF]"
+                                  : "bg-[#FF9500]/15 text-[#D97706]"
+                              }`}
+                            >
+                              {diff > 0 ? `+${diff}` : diff}kg
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-[#8E8E93] mt-0.5">
-                        Đơn: <strong className="text-[#1C1C1E]">{item.orderKg} kg</strong> • Giá:{" "}
-                        {formatVND(item.unitPrice)}/kg
+
+                      {/* Right: Dual Quantities & Toggle */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* 1 Bên: Số lượng theo đơn hàng */}
+                        <div
+                          onClick={() => updateActualKg(item.id, item.orderKg)}
+                          className="w-14 text-center py-1 bg-[#F2F2F7] rounded-xl border border-black/5 cursor-pointer hover:bg-[#E5E5EA] active:scale-95 transition"
+                          title="Chạm để sao chép số lượng theo đơn sang thực tế"
+                        >
+                          <div className="text-[8px] font-semibold text-[#8E8E93] leading-none">
+                            Theo đơn
+                          </div>
+                          <div className="text-xs font-black text-[#1C1C1E] mt-0.5 tnum leading-tight">
+                            {item.orderKg}
+                            <span className="text-[9px] font-normal text-[#8E8E93] ml-0.5">
+                              kg
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 1 Bên: Số lượng thực tế (kèm nút điều chỉnh -/+) */}
+                        <div className="flex items-center bg-[#F2F2F7] rounded-xl p-0.5 border border-black/5 shadow-2xs">
+                          {/* Nút trừ [-] */}
+                          <button
+                            type="button"
+                            onClick={() => adjustActualKg(item.id, -0.5)}
+                            className="w-6 h-6 rounded-lg bg-white text-[#1C1C1E] font-bold text-xs flex items-center justify-center hover:bg-[#E5E5EA] active:scale-90 transition shadow-2xs select-none"
+                            title="Giảm 0.5 kg"
+                          >
+                            -
+                          </button>
+
+                          {/* Ô hiển thị & nhập số kg thực tế */}
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={actualVal}
+                            onChange={(e) =>
+                              updateActualKg(
+                                item.id,
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            className="w-10 text-center font-black text-xs text-[#1C1C1E] bg-transparent focus:outline-none tnum mx-0.5"
+                          />
+
+                          {/* Nút cộng [+] */}
+                          <button
+                            type="button"
+                            onClick={() => adjustActualKg(item.id, 0.5)}
+                            className="w-6 h-6 rounded-lg bg-white text-[#1C1C1E] font-bold text-xs flex items-center justify-center hover:bg-[#E5E5EA] active:scale-90 transition shadow-2xs select-none"
+                            title="Tăng 0.5 kg"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {/* Nút Tích Hoàn Thành Soạn Hàng */}
+                        <button
+                          type="button"
+                          onClick={() => toggleItemPacked(item.id)}
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center transition active:scale-90 shadow-2xs select-none ${
+                            isPacked
+                              ? "bg-[#34C759] text-white"
+                              : "bg-white border border-[#3C3C43]/20 text-[#8E8E93] hover:border-[#34C759]"
+                          }`}
+                          title={
+                            isPacked
+                              ? "Đã soạn xong (Chạm để bỏ tích)"
+                              : "Chưa soạn (Chạm để đánh dấu xong)"
+                          }
+                        >
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        </button>
                       </div>
                     </div>
-
-                    {/* Right: Actual Weighed Kg & Toggle Button */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {/* Actual Weighed input */}
-                      <div className="flex items-center bg-[#F2F2F7] rounded-lg px-1.5 py-1 border border-black/5 text-[11px]">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={item.actualKg !== undefined ? item.actualKg : item.orderKg}
-                          onChange={(e) => updateActualKg(item.id, parseFloat(e.target.value) || 0)}
-                          className="w-12 text-right font-bold text-[#1C1C1E] bg-transparent focus:outline-none tnum"
-                        />
-                        <span className="text-[10px] text-[#8E8E93] ml-0.5">kg</span>
-                      </div>
-
-                      {/* Packed Checkbox Button */}
-                      <button
-                        type="button"
-                        onClick={() => toggleItemPacked(item.id)}
-                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 flex items-center gap-1 shadow-2xs select-none ${
-                          isPacked
-                            ? "bg-[#34C759] text-white"
-                            : "bg-white border border-[#3C3C43]/20 text-[#8E8E93] hover:text-[#1C1C1E]"
-                        }`}
-                      >
-                        <Check className="w-3 h-3 stroke-[3]" />
-                        <span>{isPacked ? "Xong" : "Chưa"}</span>
-                      </button>
-
-                      {/* Delete button */}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="p-1 text-[#8E8E93] hover:text-[#FF3B30] transition"
-                        title="Xóa món này"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
 
           {/* Bottom Proceed to Step 3 Button */}
