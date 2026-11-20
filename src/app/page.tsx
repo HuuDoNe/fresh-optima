@@ -89,8 +89,8 @@ export default function FreshOptimaApp() {
   });
   const [activeKitchenId, setActiveKitchenId] = useState<string>("k1");
 
-  // Modals & Role Selection Gatekeeper state
-  const [hasSelectedRole, setHasSelectedRole] = useState(false);
+  // Modals & Role Selection Gatekeeper state (Mặc định vào app là Admin)
+  const [hasSelectedRole, setHasSelectedRole] = useState(true);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [lastSavedRole, setLastSavedRole] = useState<{
     role: UserRole;
@@ -888,13 +888,9 @@ export default function FreshOptimaApp() {
 
       {/* Global Modals */}
       <RoleSwitchModal
-        isOpen={!loading && (!hasSelectedRole || roleModalOpen)}
-        isMandatory={!hasSelectedRole}
-        onClose={() => {
-          if (hasSelectedRole) {
-            setRoleModalOpen(false);
-          }
-        }}
+        isOpen={roleModalOpen}
+        isMandatory={false}
+        onClose={() => setRoleModalOpen(false)}
         suppliers={suppliers}
         kitchens={kitchens}
         session={session}
