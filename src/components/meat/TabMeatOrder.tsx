@@ -26,10 +26,10 @@ import {
 export interface MeatItem {
   id: string;
   name: string;
-  category: "heo" | "bo" | "ga" | "khac";
+  category?: "heo" | "bo" | "ga" | "khac";
   orderKg: number;
   actualKg?: number;
-  unitPrice: number;
+  unitPrice?: number;
   isPacked: boolean;
   note?: string;
 }
@@ -154,8 +154,6 @@ export function TabMeatOrder({
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [newItemKg, setNewItemKg] = useState<number>(10);
-  const [newItemPrice, setNewItemPrice] = useState<number>(120000);
-  const [newItemCat, setNewItemCat] = useState<"heo" | "bo" | "ga" | "khac">("heo");
 
   // File input ref for camera/upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -325,10 +323,8 @@ export function TabMeatOrder({
     const newItem: MeatItem = {
       id: `meat_custom_${Date.now()}`,
       name: newItemName.trim(),
-      category: newItemCat,
       orderKg: newItemKg,
       actualKg: newItemKg,
-      unitPrice: newItemPrice,
       isPacked: false,
     };
     const updatedItems = [...currentKitchenOrder.items, newItem];
@@ -392,16 +388,8 @@ export function TabMeatOrder({
 
   let grandTotalOrderKg = 0;
   let grandTotalActualKg = 0;
-  let grandTotalCost = 0;
   let totalItemsCount = 0;
   let packedItemsCount = 0;
-
-  const categoryBreakdown: Record<string, { kg: number; cost: number }> = {
-    heo: { kg: 0, cost: 0 },
-    bo: { kg: 0, cost: 0 },
-    ga: { kg: 0, cost: 0 },
-    khac: { kg: 0, cost: 0 },
-  };
 
   displayKitchens.forEach((k) => {
     const kOrder = meatOrders[k.id];
@@ -410,14 +398,8 @@ export function TabMeatOrder({
         const kg = it.actualKg !== undefined ? it.actualKg : it.orderKg;
         grandTotalOrderKg += it.orderKg;
         grandTotalActualKg += kg;
-        grandTotalCost += kg * it.unitPrice;
         totalItemsCount += 1;
         if (it.isPacked) packedItemsCount += 1;
-
-        const cat = it.category || "khac";
-        if (!categoryBreakdown[cat]) categoryBreakdown[cat] = { kg: 0, cost: 0 };
-        categoryBreakdown[cat].kg += kg;
-        categoryBreakdown[cat].cost += kg * it.unitPrice;
       });
     }
   });
@@ -425,11 +407,10 @@ export function TabMeatOrder({
   const completionPercent =
     totalItemsCount > 0 ? Math.round((packedItemsCount / totalItemsCount) * 100) : 0;
 
-  // Copy full meat report for Zalo
+  // Copy full meat report for Zalo (Không kèm giá tiền)
   const handleCopyMeatReport = async () => {
     let text = `BÁO CÁO TỔNG HỢP ĐƠN THỊT NGÀY ${workingDate}\n`;
     text += `Tổng khối lượng: ${grandTotalActualKg.toFixed(1)} kg\n`;
-    text += `Tổng chi phí thịt: ${formatVND(grandTotalCost)}\n`;
     text += `Tiến độ soạn hàng: ${packedItemsCount}/${totalItemsCount} món (${completionPercent}%)\n`;
     text += `====================\n\n`;
 
@@ -437,12 +418,11 @@ export function TabMeatOrder({
       const ko = meatOrders[k.id];
       if (ko && ko.items.length > 0) {
         const kKg = ko.items.reduce((acc, it) => acc + (it.actualKg || it.orderKg), 0);
-        const kCost = ko.items.reduce((acc, it) => acc + (it.actualKg || it.orderKg) * it.unitPrice, 0);
         const kPacked = ko.items.filter((it) => it.isPacked).length;
 
-        text += `🥩 ${k.name.toUpperCase()}: ${kKg.toFixed(1)} kg (${formatVND(kCost)}) - [Đã soạn: ${kPacked}/${ko.items.length}]\n`;
+        text += `🥩 ${k.name.toUpperCase()}: ${kKg.toFixed(1)} kg - [Đã soạn: ${kPacked}/${ko.items.length}]\n`;
         ko.items.forEach((it) => {
-          text += `  • ${it.name}: ${it.orderKg} kg ${it.isPacked ? "[✓]" : "[○]"}\n`;
+          text += `  • ${it.name}: ${it.actualKg || it.orderKg} kg ${it.isPacked ? "[✓]" : "[○]"}\n`;
         });
         text += `\n`;
       }
@@ -820,30 +800,24 @@ export function TabMeatOrder({
                         isPacked ? "bg-[#34C759]/[0.05]" : "hover:bg-black/[0.015]"
                       }`}
                     >
-                      {/* Left: Index badge, Name & Price */}
+                      {/* Left: Item Name & Diff badge */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-xs text-[#1C1C1E] truncate">
-                            {item.name}
-                          </span>
-                          <span className="text-[9px] font-bold uppercase px-1 py-0.2 rounded bg-[#767680]/10 text-[#8E8E93] shrink-0">
-                            {item.category}
-                          </span>
+                        <div className="font-bold text-xs text-[#1C1C1E] truncate">
+                          {item.name}
                         </div>
-                        <div className="text-[10px] text-[#8E8E93] mt-0.5 flex items-center gap-1">
-                          <span>{formatVND(item.unitPrice)}/kg</span>
-                          {diff !== 0 && (
+                        {diff !== 0 && (
+                          <div className="text-[10px] mt-0.5">
                             <span
-                              className={`text-[9px] font-bold px-1 rounded ${
+                              className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-block ${
                                 diff > 0
                                   ? "bg-[#007AFF]/12 text-[#007AFF]"
                                   : "bg-[#FF9500]/15 text-[#D97706]"
                               }`}
                             >
-                              {diff > 0 ? `+${diff}` : diff}kg
+                              Chênh: {diff > 0 ? `+${diff}` : diff} kg
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Right: Dual Quantities & Toggle */}
@@ -980,9 +954,9 @@ export function TabMeatOrder({
               </div>
 
               <div className="bg-[#F2F2F7] rounded-xl p-2 text-center border border-black/5">
-                <span className="text-[10px] text-[#8E8E93] font-semibold">Tổng Tiền Thịt</span>
-                <div className="font-black text-xs text-[#34C759] mt-0.5 tnum truncate">
-                  {formatVND(grandTotalCost)}
+                <span className="text-[10px] text-[#8E8E93] font-semibold">Tổng Số Món</span>
+                <div className="font-black text-sm text-[#34C759] mt-0.5 tnum">
+                  {totalItemsCount} món
                 </div>
               </div>
 
@@ -990,42 +964,6 @@ export function TabMeatOrder({
                 <span className="text-[10px] text-[#8E8E93] font-semibold">Đã Soạn Xong</span>
                 <div className="font-black text-sm text-[#007AFF] mt-0.5 tnum">
                   {completionPercent}%
-                </div>
-              </div>
-            </div>
-
-            {/* Meat Categories Breakdown Chips */}
-            <div className="pt-1 border-t border-[#3C3C43]/10">
-              <span className="text-[10px] font-bold uppercase text-[#8E8E93]">Cơ Cấu Thịt:</span>
-              <div className="grid grid-cols-3 gap-1.5 mt-1.5 text-xs">
-                <div className="p-2 rounded-xl bg-orange-50/80 border border-orange-200/60 text-orange-950">
-                  <div className="text-[10px] font-bold text-orange-600">Thịt Heo</div>
-                  <div className="font-black text-xs mt-0.5 tnum">
-                    {categoryBreakdown.heo.kg.toFixed(1)} kg
-                  </div>
-                  <div className="text-[9px] text-orange-700/80 tnum">
-                    {formatVND(categoryBreakdown.heo.cost)}
-                  </div>
-                </div>
-
-                <div className="p-2 rounded-xl bg-red-50/80 border border-red-200/60 text-red-950">
-                  <div className="text-[10px] font-bold text-red-600">Thịt Bò</div>
-                  <div className="font-black text-xs mt-0.5 tnum">
-                    {categoryBreakdown.bo.kg.toFixed(1)} kg
-                  </div>
-                  <div className="text-[9px] text-red-700/80 tnum">
-                    {formatVND(categoryBreakdown.bo.cost)}
-                  </div>
-                </div>
-
-                <div className="p-2 rounded-xl bg-amber-50/80 border border-amber-200/60 text-amber-950">
-                  <div className="text-[10px] font-bold text-amber-600">Gia Cầm (Gà)</div>
-                  <div className="font-black text-xs mt-0.5 tnum">
-                    {categoryBreakdown.ga.kg.toFixed(1)} kg
-                  </div>
-                  <div className="text-[9px] text-amber-700/80 tnum">
-                    {formatVND(categoryBreakdown.ga.cost)}
-                  </div>
                 </div>
               </div>
             </div>
@@ -1041,9 +979,6 @@ export function TabMeatOrder({
               const ko = meatOrders[k.id];
               const kKg = ko
                 ? ko.items.reduce((acc, it) => acc + (it.actualKg || it.orderKg), 0)
-                : 0;
-              const kCost = ko
-                ? ko.items.reduce((acc, it) => acc + (it.actualKg || it.orderKg) * it.unitPrice, 0)
                 : 0;
               const packedCount = ko ? ko.items.filter((it) => it.isPacked).length : 0;
               const totalItems = ko ? ko.items.length : 0;
@@ -1074,9 +1009,6 @@ export function TabMeatOrder({
                     <div className="text-right shrink-0">
                       <span className="text-xs font-black text-[#1C1C1E] tnum">
                         {kKg.toFixed(1)} kg
-                      </span>
-                      <span className="text-[10px] text-[#34C759] font-bold ml-1.5 tnum">
-                        {formatVND(kCost)}
                       </span>
                     </div>
                   </div>
@@ -1194,54 +1126,17 @@ export function TabMeatOrder({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#8E8E93] mb-1">
-                    Số Lượng (Kg)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newItemKg}
-                    onChange={(e) => setNewItemKg(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-[#F2F2F7] rounded-xl border border-black/5 font-bold text-[#1C1C1E] focus:outline-none focus:bg-white tnum"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#8E8E93] mb-1">
-                    Đơn Giá (đ/Kg)
-                  </label>
-                  <input
-                    type="number"
-                    step="1000"
-                    value={newItemPrice}
-                    onChange={(e) => setNewItemPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-[#F2F2F7] rounded-xl border border-black/5 font-bold text-[#1C1C1E] focus:outline-none focus:bg-white tnum"
-                  />
-                </div>
-              </div>
-
               <div>
                 <label className="block text-[11px] font-semibold text-[#8E8E93] mb-1">
-                  Nhóm Loại Thịt
+                  Số Lượng Theo Đơn (Kg)
                 </label>
-                <div className="grid grid-cols-4 gap-1">
-                  {(["heo", "bo", "ga", "khac"] as const).map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setNewItemCat(cat)}
-                      className={`py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${
-                        newItemCat === cat
-                          ? "bg-[#1C1C1E] text-white"
-                          : "bg-[#F2F2F7] text-[#8E8E93]"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newItemKg}
+                  onChange={(e) => setNewItemKg(parseFloat(e.target.value) || 0)}
+                  className="w-full px-3 py-2 bg-[#F2F2F7] rounded-xl border border-black/5 font-bold text-[#1C1C1E] focus:outline-none focus:bg-white tnum"
+                />
               </div>
             </div>
 
