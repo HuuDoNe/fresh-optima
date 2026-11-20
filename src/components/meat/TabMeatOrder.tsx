@@ -870,9 +870,9 @@ export function TabMeatOrder({
                           {/* Nút trừ [-] */}
                           <button
                             type="button"
-                            onClick={() => adjustActualKg(item.id, -0.5)}
+                            onClick={() => adjustActualKg(item.id, -0.1)}
                             className="w-6 h-6 rounded-lg bg-white text-[#1C1C1E] font-bold text-xs flex items-center justify-center hover:bg-[#E5E5EA] active:scale-90 transition shadow-2xs select-none"
-                            title="Giảm 0.5 kg"
+                            title="Giảm 0.1 kg"
                           >
                             -
                           </button>
@@ -894,9 +894,9 @@ export function TabMeatOrder({
                           {/* Nút cộng [+] */}
                           <button
                             type="button"
-                            onClick={() => adjustActualKg(item.id, 0.5)}
+                            onClick={() => adjustActualKg(item.id, 0.1)}
                             className="w-6 h-6 rounded-lg bg-white text-[#1C1C1E] font-bold text-xs flex items-center justify-center hover:bg-[#E5E5EA] active:scale-90 transition shadow-2xs select-none"
-                            title="Tăng 0.5 kg"
+                            title="Tăng 0.1 kg"
                           >
                             +
                           </button>
@@ -1201,7 +1201,7 @@ export function TabMeatOrder({
                   </label>
                   <input
                     type="number"
-                    step="0.5"
+                    step="0.1"
                     value={newItemKg}
                     onChange={(e) => setNewItemKg(parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 bg-[#F2F2F7] rounded-xl border border-black/5 font-bold text-[#1C1C1E] focus:outline-none focus:bg-white tnum"
